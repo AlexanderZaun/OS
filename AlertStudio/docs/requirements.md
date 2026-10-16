@@ -10,11 +10,11 @@
 | R02 | Эффекты и блоки | внешний Orbit; modifiers отсутствуют | Runtime install/render Orbit | Частично |
 | R03 | Раздельные определения | text и orbit settings JSON | Generic Properties отображает radius | Частично: составные значения впереди |
 | R04 | Многофайловый проект | revision tree, independent values | Roundtrip, inspect tree, UI save/open | Пройдено для текущих данных |
-| R05 | Согласованное сохранение | Immutable revision + single index | Fault injection на третьем value | Частично: power-loss/fsync/recovery index впереди |
+| R05 | Согласованное сохранение | Immutable revision, sync JSON, backup index, Windows lease | Metadata/backup/pre-commit fault injection, damaged/missing index, actual second process | Пройдено для сбоев процесса; power-loss/network shares не проверены |
 | R06 | Независимость экземпляров | copy defaults, deep duplicate | Logic + UI text duplicates | Частично: fog/presets впереди |
 | R07 | Заменяемость технологий | contracts/adapters/import guard | typecheck + boundaries | Частично: contracts не все подключены |
 | R08 | RU/EN | platform dictionaries + module labels | UI switch | Частично: fallback/long-label/error localization audit |
-| R09 | Старт/проект | create/open/save/save-as/dirty warning | create/save/open UI | Частично: recents и recovery отсутствуют |
+| R09 | Старт/проект | create/open/save/save-as/dirty warning, autosave/recovery UI | Save/open, crash+normal-close recovery, unsaved restore copy | Частично: recent projects отсутствуют |
 | R10 | Отдельные панели | дополнительные окна, общая служба | Edit + undo cross-window | Частично: перенос/monitor recovery впереди |
 | R11 | Три этапа/две области | отсутствуют | — | Запланировано |
 | R12 | Монтаж/звук | отсутствуют | — | Запланировано |

@@ -10,4 +10,8 @@ Electron bridge предоставляет конкретные методы, н
 
 `Files` хранит неизменные многофайловые ревизии; индекс переключается после записи. `Extensions` проверяет manifests, хеши, пути и зависимости, устанавливает staging и публикует ready-маркер. Стартовая загрузка повторно проверяет пакеты. Runtime ESM загружается в renderer через `studio://extensions`. В main исполняются только встроенные исходники.
 
+`app/bootstrap/project-session.ts` связывает авторитетный Projects, явное сохранение Files, RecoveryStore и FolderLease. Черновики имеют отдельную сериализованную очередь, не меняют saved baseline и не блокируют обычное редактирование. Явные create/open/save/restore сериализованы через busy; неудачное open сохраняет текущую модель и lease. После успешной смены проекта старая lease освобождается. UI принимает snapshots по возрастанию revision; структурная команда временно блокирует поля свойств, пока новое выделение не подтверждено.
+
+Общий стиль: ui-kit/theme.css задаёт палитру и контролы, workspace adapter отображает их в переменные Dockview, ui-kit/Dialog.tsx управляет focus/Escape/Tab для системных in-app диалогов. Canvas checkerboard — часть preview, не экспортируемая подложка. Native Windows file dialogs/close prompt остаются системными.
+
 Контракты ResourceService, EncoderAdapter и WindowAdapter пока предварительные; ResourceService/EncoderAdapter не имеют рабочих реализаций. Workspace и окно пока подключены конкретными адаптерами. SDK не объявлен стабильным.

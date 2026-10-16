@@ -5,10 +5,11 @@
 | Команда | Результат |
 |---|---|
 | node node_modules/typescript/bin/tsc --noEmit | exit 0 |
-| node tools/check-boundaries.mjs | 7 независимых файлов, проверка пройдена |
-| node tools/test.mjs | 4 поведенческих теста, 4 passed |
+| node tools/check-boundaries.mjs | 8 независимых файлов, проверка пройдена |
+| node tools/test.mjs | 9 поведенческих тестов, 9 passed |
 | node tools/build.mjs | desktop/UI и 2 отдельные пакета собраны |
 | node tests/electron-smoke.mjs | Windows Electron UI smoke пройден |
+| node tests/recovery-smoke.mjs | recovery, process locking, normal close и theme UI smoke пройдены |
 | node tests/reference-capture.mjs | оригинал запущен, t=0/6/12 сохранены |
 | node tools/performance.mjs | 1/50/200 объектов, результаты сохранены |
 
@@ -22,4 +23,12 @@ UI test запускает **собранный** Electron без Vite server. �
 
 Найденные и исправленные ошибки: stale props Dockview (переведено на context), ESM protocol CORS (corsEnabled + headers/MIME). Первые неуспешные UI-прогоны не считаются passed. Финальный повтор после exact module lock прошёл.
 
-Vite сообщает chunk >500KB (625KB JS, 164KB gzip); это предупреждение, оптимизация ещё не выполнена. Нет проверки clean install/installer, других ОС, OBS, FFmpeg/alpha video/audio, GPU, drag/pan/DPI/monitor transitions, autosave/power-loss, обновлений module versions, вредоносного extension code и полной матрицы требований.
+Новый участок D: fault injection после metadata, backup и до индекса; fallback после повреждения/отсутствия primary; запрет перезаписи другого project ID; реальный дочерний процесс удерживает lease, второй получает отказ, kill освобождает lease. Проверены retry после ошибки черновика и новые правки во время задержанной записи: финальный черновик содержит последний снимок, explicit Save baseline не изменён.
+
+Новый UI-тест: два разных userData-профиля Electron открывают одну папку — второй получает понятный отказ. После app.exit(77) основной процесс запускается вновь, показывает recovery и восстанавливает несохранённую копию. Исходный index остаётся неизменным; Save деактивирует кандидат. Повреждение index открывает предыдущую версию с предупреждением. Отдельно закрыто последнее окно до истечения debounce; before-quit дописал последнюю правку, повторный запуск её восстановил. Выбор кнопки native prompt, как и file dialogs, подменён тестом; остальные lifecycle/storage операции настоящие.
+
+При финальной проверке найдена гонка быстрого duplicate → edit: fields могли ещё ссылаться на прежний object. Теперь структурная команда блокирует редактируемые controls до подтверждённого snapshot, старшие revisions не заменяются старыми ответами. Повторная проверка независимых дубликатов и отдельного окна прошла. В UI-тесте восстановления также исправлены ожидания завершения асинхронных операций; ранние неуспешные прогоны не считаются passed.
+
+Общий стиль просмотрен на 900×650 и 1920×1080, в recovery и Extensions. Исправлено перекрытие variables встроенной темой Dockview из-за внутренней обёртки. Computed tabs background теперь rgb(13,19,30), совпадает с --studio-bg. Escape закрывает modal с возвратом focus; горизонтальный document overflow в малом окне не обнаружен. Артефакты: artifacts/recovery-ui-results.json, artifacts/screenshots/recovery.png, autosave.png, backup-recovery.png, editor-compact.png, editor-1080.png, extensions-compact.png.
+
+Vite сообщает chunk >500KB (634KB JS, 167KB gzip); это предупреждение, оптимизация ещё не выполнена. Нет проверки clean install/installer, других ОС, OBS, FFmpeg/alpha video/audio, GPU, drag/pan/DPI/monitor transitions, физического power-loss и cross-machine/network share locking, обновлений module versions, вредоносного extension code и полной матрицы требований.
