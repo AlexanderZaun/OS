@@ -1,0 +1,1 @@
+{"id":"radius","type":"number","default":240,"min":10,"max":1000,"unit":"px","animatable":true,"label":{"ru":"Радиус","en":"Radius"}}
