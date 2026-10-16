@@ -1,0 +1,21 @@
+{
+  "id": "glow",
+  "type": "number",
+  "default": 60,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Свечение",
+    "en": "Glow"
+  },
+  "group": {
+    "id": "appearance",
+    "label": {
+      "ru": "Звёзды",
+      "en": "Stars"
+    }
+  }
+}

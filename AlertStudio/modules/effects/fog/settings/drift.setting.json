@@ -1,0 +1,21 @@
+{
+  "id": "drift",
+  "type": "number",
+  "default": 35,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Сила ветра",
+    "en": "Wind strength"
+  },
+  "group": {
+    "id": "motion",
+    "label": {
+      "ru": "Движение",
+      "en": "Motion"
+    }
+  }
+}

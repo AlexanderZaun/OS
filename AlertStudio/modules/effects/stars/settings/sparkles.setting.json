@@ -1,0 +1,21 @@
+{
+  "id": "sparkles",
+  "type": "number",
+  "default": 20,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Доля лучистых звёзд",
+    "en": "Sparkle fraction"
+  },
+  "group": {
+    "id": "appearance",
+    "label": {
+      "ru": "Звёзды",
+      "en": "Stars"
+    }
+  }
+}

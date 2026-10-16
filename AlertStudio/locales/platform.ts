@@ -15,6 +15,8 @@ const sessionEn = {
   projectFolderContainsOtherProject:'This folder contains another project. Choose an empty folder for Save as.',
   time:'Time (seconds)', emptyLayersTitle:'Your scene is empty', emptyLayersHint:'Add an object using the tools on the left.',
   check:'Local project · offline', resume:'Continue editing', savedFolder:'Project folder',
+  zoom:'Canvas zoom',zoomIn:'Zoom in',zoomOut:'Zoom out',canvasViewport:'Canvas viewport',
+  canvasNavigation:'Drag: move object · Esc: cancel · Wheel: zoom · Space / middle mouse: pan · Home: fit · 1: 100%',
 };
 const sessionRu:typeof sessionEn = {
   recovery:'Черновики восстановления', recoveryIntro:'Черновики хранятся отдельно от сохранённых проектов. Восстановление открывает несохранённую копию.',
@@ -30,6 +32,8 @@ const sessionRu:typeof sessionEn = {
   projectFolderContainsOtherProject:'В этой папке находится другой проект. Для «Сохранить как» выберите пустую папку.',
   time:'Время (секунды)', emptyLayersTitle:'Сцена пока пуста', emptyLayersHint:'Добавьте объект с помощью инструментов слева.',
   check:'Локальный проект · офлайн', resume:'Продолжить редактирование', savedFolder:'Папка проекта',
+  zoom:'Масштаб холста',zoomIn:'Приблизить',zoomOut:'Отдалить',canvasViewport:'Область холста',
+  canvasNavigation:'Перетащить: объект · Esc: отмена · Колесо: масштаб · Пробел / средняя кнопка: холст · Home: вписать · 1: 100%',
 };
 const dictionaries = {en:{...en,...sessionEn},ru:{...ru,...sessionRu}};
 export type TranslationKey = keyof typeof dictionaries.en;

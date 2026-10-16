@@ -1,0 +1,21 @@
+{
+  "id": "opacity",
+  "type": "number",
+  "default": 75,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Непрозрачность",
+    "en": "Opacity"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Вид",
+      "en": "Appearance"
+    }
+  }
+}

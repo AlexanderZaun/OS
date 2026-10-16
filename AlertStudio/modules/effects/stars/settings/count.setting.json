@@ -1,0 +1,21 @@
+{
+  "id": "count",
+  "type": "number",
+  "default": 220,
+  "min": 0,
+  "max": 5000,
+  "step": 1,
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Количество звёзд",
+    "en": "Star count"
+  },
+  "group": {
+    "id": "appearance",
+    "label": {
+      "ru": "Звёзды",
+      "en": "Stars"
+    }
+  }
+}

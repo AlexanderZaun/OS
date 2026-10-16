@@ -36,13 +36,21 @@
 .empty-state h2 { margin-bottom: 8px; font-size: 14px; }
 .empty-state p { margin: 0; font-size: 12px; }
 .canvas-panel { height: 100%; min-height: 0; display: flex; flex-direction: column; background: var(--studio-sunken); }
-.canvas-tools { min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--studio-border); font-size: 11px; color: var(--studio-muted); }
+.canvas-tools { min-height: 48px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--studio-border); font-size: 11px; color: var(--studio-muted); }
 .canvas-tools button { font-size: 12px; }
 .canvas-tools label { flex-direction: row; align-items: center; margin: 0; }
 .canvas-tools input { width: 65px; min-height: 28px; padding: 4px; }
 .canvas-tools > span { margin-left: auto; white-space: nowrap; }
-.canvas-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 25px; overflow: hidden; }
-.canvas-stage canvas { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; box-shadow: 0 0 0 1px var(--studio-border); background-color: #1b2839; background-image: conic-gradient(#243348 25%,transparent 0 50%,#243348 0 75%,transparent 0); background-size: 22px 22px; }
+.canvas-zoom-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.canvas-zoom-controls select { width: 122px; font-size: 12px; }
+.canvas-zoom-controls > button:first-child, .canvas-zoom-controls > button:nth-of-type(2) { width: 32px; padding: 4px; }
+.canvas-stage { flex: 1; min-height: 0; min-width: 0; position: relative; padding: 0; overflow: hidden; touch-action: none; outline-offset: -2px; }
+.canvas-stage:focus-visible { outline: 2px solid var(--studio-accent); }
+.canvas-stage[data-navigation='pan'] { cursor: grab; }
+.canvas-stage[data-navigation='dragging'] { cursor: grabbing; }
+.canvas-stage[data-navigation='moving'] { cursor: move; }
+.canvas-selection { position: absolute; border: 1px solid var(--studio-accent); box-shadow: 0 0 0 1px var(--studio-sunken); pointer-events: none; }
+.canvas-stage canvas { position: absolute; left: 50%; top: 50%; max-width: none; max-height: none; transform-origin: center; pointer-events: none; box-shadow: 0 0 0 1px var(--studio-border); background-color: var(--studio-raised); background-image: conic-gradient(var(--studio-hover) 25%,transparent 0 50%,var(--studio-hover) 0 75%,transparent 0); background-size: 22px 22px; }
 .canvas-caption { padding: 10px; font-size: 10px; text-align: center; color: var(--studio-subtle); }
 .welcome { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; gap: clamp(40px,7vw,100px); padding: 40px; overflow: auto; }
 .welcome-copy { max-width: 480px; }
@@ -81,5 +89,5 @@ footer { min-height: 30px; display: flex; align-items: center; gap: 16px; paddin
 .detached-content { flex: 1; min-height: 0; overflow: hidden; }
 @media (max-width: 1050px) { .toolbar { flex-wrap: wrap; } .toolbar-spacer { display: none; } .welcome h1 { font-size: 34px; } }
 @media (max-width: 800px) { .welcome { gap: 30px; padding: 26px; } .welcome-copy { max-width: 300px; } .tool-rail { width: 125px; } .topbar { gap: 10px; padding: 0 12px; } }
-@media (max-width: 650px) { .welcome { flex-direction: column; align-items: stretch; justify-content: flex-start; } .welcome-copy { max-width: none; } .welcome h1 { font-size: 28px; } .project-form { width: 100%; padding: 20px; } .tool-rail { width: 100px; } .project-title small { display: none; } .canvas-stage { padding: 12px; } .canvas-tools { flex-wrap: wrap; } .autosave-status { font-size: 9px; } }
+@media (max-width: 650px) { .welcome { flex-direction: column; align-items: stretch; justify-content: flex-start; } .welcome-copy { max-width: none; } .welcome h1 { font-size: 28px; } .project-form { width: 100%; padding: 20px; } .tool-rail { width: 100px; } .project-title small { display: none; } .canvas-tools { flex-wrap: wrap; } .autosave-status { font-size: 9px; } }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }

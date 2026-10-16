@@ -1,0 +1,21 @@
+{
+  "id": "speed",
+  "type": "number",
+  "default": 100,
+  "min": 0,
+  "max": 300,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Скорость",
+    "en": "Speed"
+  },
+  "group": {
+    "id": "motion",
+    "label": {
+      "ru": "Движение",
+      "en": "Motion"
+    }
+  }
+}

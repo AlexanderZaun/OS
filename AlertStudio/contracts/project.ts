@@ -4,6 +4,7 @@ export interface Project { id: string; name: string; format: 1; width: number; h
 export type Command =
   | { type: 'add'; effect: string }
   | { type: 'set'; id: string; key: string; value: Value }
+  | { type: 'patch'; id: string; values: Record<string,Value>; revision:number }
   | { type: 'select'; id: string | null }
   | { type: 'remove' | 'duplicate' | 'visibility'; id: string }
   | { type: 'undo' } | { type: 'redo' };

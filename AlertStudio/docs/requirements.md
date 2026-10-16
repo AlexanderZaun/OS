@@ -11,7 +11,7 @@
 | R03 | Раздельные определения | text и orbit settings JSON | Generic Properties отображает radius | Частично: составные значения впереди |
 | R04 | Многофайловый проект | revision tree, independent values | Roundtrip, inspect tree, UI save/open | Пройдено для текущих данных |
 | R05 | Согласованное сохранение | Immutable revision, sync JSON, backup index, Windows lease | Metadata/backup/pre-commit fault injection, damaged/missing index, actual second process | Пройдено для сбоев процесса; power-loss/network shares не проверены |
-| R06 | Независимость экземпляров | copy defaults, deep duplicate | Logic + UI text duplicates | Частично: fog/presets впереди |
+| R06 | Независимость экземпляров | copy defaults, deep duplicate | Logic + UI text/fog duplicates | Частично: пресеты впереди |
 | R07 | Заменяемость технологий | contracts/adapters/import guard | typecheck + boundaries | Частично: contracts не все подключены |
 | R08 | RU/EN | platform dictionaries + module labels | UI switch | Частично: fallback/long-label/error localization audit |
 | R09 | Старт/проект | create/open/save/save-as/dirty warning, autosave/recovery UI | Save/open, crash+normal-close recovery, unsaved restore copy | Частично: recent projects отсутствуют |
@@ -19,7 +19,7 @@
 | R11 | Три этапа/две области | отсутствуют | — | Запланировано |
 | R12 | Монтаж/звук | отсутствуют | — | Запланировано |
 | R13 | Аудио режимы | отсутствуют | — | Запланировано |
-| R14 | Перенос референса | аудит + три исходных baseline | Actual reference replay/capture | Частично: перенос графики не выполнен |
+| R14 | Визуальный ориентир | аудит + три исходных baseline; собственный fog | Actual reference replay/capture, собственные fog checks | Цель уточнена пользователем: собственные решения, без копирования алгоритмов; остальные эффекты впереди |
 | R15 | Прозрачный экспорт | отсутствует | Проверена только альфа Canvas, не файл | Запланировано |
 | R16 | Пресеты/совместимость | exact module versions, unknown values retained | Unknown-module roundtrip | Частично: presets/migrations отсутствуют |
 | R17 | Циклическая подложка | отсутствует | — | Запланировано |
@@ -33,4 +33,4 @@
 | R25 | Производительность | CPU/storage benchmark 1/50/200 | tools/performance.mjs | Частично: UI frame time/GPU/export ещё нет |
 | R26 | Развитие SDK | experimental 0.1, gates documented | External panel+effect tested; export не проверен | Экспериментальный |
 
-Полная приёмка основы не пройдена: нет двух fog, дополнительных блоков, video alpha export и точного перемещения panel instance. Этап B подтверждён runtime-проверкой; C и D реализованы частично. Этапы E–I впереди.
+Полная приёмка основы не пройдена: нет дополнительных блоков, video alpha export и точного перемещения panel instance. Независимые fog/stars, аналитический seek и drag объектов проверены. Этап B подтверждён runtime-проверкой; C, D и E реализованы частично. Ручки размера/поворота, snapping и молнии впереди, звук отложен. Подробный план — feature-catalog-ru.md.

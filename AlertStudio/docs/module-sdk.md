@@ -14,4 +14,10 @@ PanelProps.interactionPending — добавленное optional UI-поле SD
 
 Регистрация откатывает добавленные entries при синхронной ошибке; register может вернуть dispose для подписок. Полная изоляция ошибок, async rollback и реестр cleanup-ресурсов ещё нужны.
 
+Экспериментальный Canvas-контракт вынесен в sdk/canvas2d.ts: host.registerCanvasRenderer({kind,create}), экземпляр с draw(context,primitive)/dispose. Primitive может содержать нейтральные data и ownerId; CanvasPanel назначает ownerId из UUID объекта, backend создаёт renderer на пару ownerId/kind и освобождает при исчезновении из кадра. Неизвестные kind пропускаются. Canvas-типы не попадают в sdk/index.ts и модель проекта. Export host пока не реализован.
+
+Setting поддерживает optional group (id + ru/en), step и type:select с options (value + ru/en). Properties использует общие theme controls, для select сохраняет исходный тип value. Значения вне диапазона, не соответствующие step или отсутствующие в options отклоняются командной моделью. Дополнения относятся к внутреннему эксперименту SDK 0.1.
+
+Effect.editor — optional контракт геометрии редактора: position задаёт ключи координат, bounds(values, measureText) возвращает центр/размер/rotation в радианах. MeasureText получает текст и строку font и возвращает ширину без DOM в SDK. Loader исключает editor из definition при передаче в main. Для перетаскивания используется команда patch {id,values,revision}: все значения валидируются атомарно, устаревшая revision отклоняется, успешная правка выбирает объект и создаёт одну запись истории. Модуль без editor продолжает работать через Layers/Properties.
+
 Переход к предварительному SDK: проверить внешние панель и эффект, экспортный host, жизненный цикл, обновление пакета и сохранение точных версий. Переход к стабильному: несколько разных модулей, модификаторы и экспорт, миграция старого проекта. Сейчас breaking changes допустимы с изменением версии SDK и примеров.

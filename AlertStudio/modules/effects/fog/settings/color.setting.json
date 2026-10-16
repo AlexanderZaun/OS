@@ -1,0 +1,18 @@
+{
+  "id": "color",
+  "type": "color",
+  "default": "#7896bf",
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Цвет тумана",
+    "en": "Fog color"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Вид",
+      "en": "Appearance"
+    }
+  }
+}

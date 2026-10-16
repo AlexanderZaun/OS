@@ -1,0 +1,21 @@
+{
+  "id": "loop",
+  "type": "number",
+  "default": 24,
+  "min": 2,
+  "max": 120,
+  "step": 1,
+  "unit": "s",
+  "animatable": false,
+  "label": {
+    "ru": "Период движения",
+    "en": "Motion period"
+  },
+  "group": {
+    "id": "motion",
+    "label": {
+      "ru": "Движение",
+      "en": "Motion"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "variation",
+  "type": "number",
+  "default": 75,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Разброс размеров",
+    "en": "Size variation"
+  },
+  "group": {
+    "id": "appearance",
+    "label": {
+      "ru": "Звёзды",
+      "en": "Stars"
+    }
+  }
+}

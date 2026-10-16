@@ -1,0 +1,48 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp} from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import {starsEffect} from '../modules/effects/stars/src/model';
+import type {StarsFrame} from '../modules/effects/stars/src/model';
+import {fogEffect} from '../modules/effects/fog/src/model';
+import {Projects} from '../core/project/service';
+import {Files} from '../adapters/storage-files/project';
+import {validateEffectDefinition} from '../adapters/validation-ajv/effect';
+import {validateCommand} from '../adapters/validation-ajv/project';
+const defaults=()=>Object.fromEntries(starsEffect.settings.map(s=>[s.id,s.default]));
+test('Stars preserve seeded layout, replay seek and remain bounded with malformed saved values',()=>{
+  const values=defaults(),copy=structuredClone(values),frame=starsEffect.evaluate(values,6);
+  starsEffect.evaluate(values,0);starsEffect.evaluate(values,12);assert.deepEqual(starsEffect.evaluate(values,6),frame);assert.deepEqual(values,copy);
+  const data=frame[0].data as StarsFrame;assert.equal(data.stars.length,220);
+  assert.deepEqual((starsEffect.evaluate({...values,count:230},6)[0].data as StarsFrame).stars.slice(0,220),data.stars);
+  assert.notDeepEqual(starsEffect.evaluate({...values,seed:74},6),frame);
+  assert.notDeepEqual(starsEffect.evaluate({...values,distribution:'clustered'},6),frame);
+  assert.deepEqual(starsEffect.evaluate({...values,twinkleSpeed:0,drift:0},6),starsEffect.evaluate({...values,twinkleSpeed:0,drift:0},99));
+  assert.deepEqual(starsEffect.evaluate({...values,count:0},0),[]);assert.deepEqual(starsEffect.evaluate({...values,opacity:0},0),[]);
+  const bad=starsEffect.evaluate({...values,count:999999,width:0,size:NaN,color:'bad'},Infinity)[0];
+  assert.equal((bad.data as StarsFrame).stars.length,5000);assert.equal(bad.color,'#c6ddff');
+  assert.ok((bad.data as StarsFrame).stars.every(s=>Object.values(s).every(v=>typeof v!=='number'||Number.isFinite(v))&&s.alpha>=0&&s.alpha<=1));
+});
+test('Stars metadata validates and independent field values roundtrip in folder projects',async()=>{
+  const {evaluate,editor,...definition}=starsEffect;validateEffectDefinition(definition);
+  const model=new Projects(()=>[starsEffect]);model.dispatch({type:'add',effect:'stars'});const first=model.snapshot().selected!;
+  model.dispatch({type:'duplicate',id:first});const second=model.snapshot().selected!;
+  model.dispatch({type:'set',id:second,key:'seed',value:99});model.dispatch({type:'set',id:second,key:'palette',value:'single'});
+  assert.equal(model.snapshot().project.objects[0].settings.seed,73);
+  assert.throws(()=>model.dispatch({type:'set',id:first,key:'count',value:5001}));
+  assert.throws(()=>model.dispatch({type:'set',id:first,key:'distribution',value:'bad'}));
+  const folder=await mkdtemp(path.join(os.tmpdir(),'alert-stars-')),files=new Files();
+  await files.save(folder,model.snapshot().project);assert.deepEqual(await files.open(folder),model.snapshot().project);
+});
+test('Atomic drag patch is one undo step, validates all fields and rejects stale revisions',()=>{
+  const model=new Projects(()=>[fogEffect]);model.dispatch({type:'add',effect:'fog'});const id=model.snapshot().selected!;
+  const before=model.snapshot();model.dispatch(validateCommand({type:'patch',id,values:{x:1234,y:777},revision:before.revision}));
+  const after=model.snapshot();assert.equal(after.revision,before.revision+1);assert.equal(after.project.objects[0].settings.x,1234);assert.equal(after.project.objects[0].settings.y,777);
+  model.dispatch({type:'undo'});assert.deepEqual(model.snapshot().project,before.project);model.dispatch({type:'redo'});assert.deepEqual(model.snapshot().project,after.project);
+  const current=model.snapshot();
+  assert.throws(()=>model.dispatch({type:'patch',id,values:{x:10,y:999999},revision:current.revision}));assert.deepEqual(model.snapshot(),current);
+  assert.throws(()=>model.dispatch({type:'patch',id,values:{x:10,unknown:10},revision:current.revision}));assert.deepEqual(model.snapshot(),current);
+  assert.throws(()=>model.dispatch({type:'patch',id,values:{x:10},revision:before.revision}));assert.deepEqual(model.snapshot(),current);
+  assert.throws(()=>validateCommand({type:'patch',id,values:{},revision:0}));assert.throws(()=>validateCommand({type:'patch',id,values:{x:1},revision:0,extra:true}));
+});

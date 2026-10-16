@@ -1,0 +1,21 @@
+{
+  "id": "height",
+  "type": "number",
+  "default": 960,
+  "min": 32,
+  "max": 4096,
+  "step": 1,
+  "unit": "px",
+  "animatable": true,
+  "label": {
+    "ru": "Высота поля",
+    "en": "Field height"
+  },
+  "group": {
+    "id": "region",
+    "label": {
+      "ru": "Область",
+      "en": "Region"
+    }
+  }
+}

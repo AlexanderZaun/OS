@@ -94,7 +94,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
     await run(async () => { if (await window.studio.open()) setWelcome(false); });
   }
 
-  const props: PanelProps = {snapshot, dispatch, language, effects:registry.effects, interactionPending:working || transitioning};
+  const props: PanelProps = {snapshot, dispatch, language, effects:registry.effects, interactionPending:working || transitioning,canvasRenderers:registry.canvasRenderers};
   const Panel = registry.panels.find(panel => panel.id === detached)?.component;
   const savedTime = session.savedAt ? new Date(session.savedAt).toLocaleTimeString(language, {hour:'2-digit',minute:'2-digit'}) : '';
 

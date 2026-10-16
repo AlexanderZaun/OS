@@ -1,0 +1,21 @@
+{
+  "id": "width",
+  "type": "number",
+  "default": 1800,
+  "min": 32,
+  "max": 4096,
+  "step": 1,
+  "unit": "px",
+  "animatable": true,
+  "label": {
+    "ru": "Ширина поля",
+    "en": "Field width"
+  },
+  "group": {
+    "id": "region",
+    "label": {
+      "ru": "Область",
+      "en": "Region"
+    }
+  }
+}

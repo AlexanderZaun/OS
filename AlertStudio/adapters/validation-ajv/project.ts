@@ -10,7 +10,9 @@ const validate=new Ajv({allowUnionTypes:true}).compile({type:'object',additional
 export function validateProject(raw:unknown):Project { if(!validate(raw)) throw Error('Invalid project: '+JSON.stringify(validate.errors)); const p=raw as Project; if(new Set(p.objects.map(o=>o.id)).size!==p.objects.length) throw Error('Duplicate object ID'); if(p.objects.some(o=>!p.modules[o.type]))throw Error('Missing module lock reference');return p; }
 const variants=[
   {type:{const:'add'},effect:id}, {type:{const:'select'},id:{anyOf:[id,{type:'null'}]}},
-  {type:{enum:['remove','duplicate','visibility']},id}, {type:{const:'set'},id,key:{type:'string'},value}, {type:{enum:['undo','redo']}}
+  {type:{enum:['remove','duplicate','visibility']},id}, {type:{const:'set'},id,key:{type:'string'},value},
+  {type:{const:'patch'},id,values:{type:'object',minProperties:1,maxProperties:100,propertyNames:{pattern:'^[a-zA-Z][a-zA-Z0-9-]{0,63}$'},additionalProperties:value},revision:{type:'integer',minimum:0}},
+  {type:{enum:['undo','redo']}}
 ].map(properties=>({type:'object',additionalProperties:false,required:Object.keys(properties),properties}));
 const check=new Ajv({allowUnionTypes:true}).compile({oneOf:variants});
 export function validateCommand(raw:unknown):Command { if(!check(raw)) throw Error('Invalid command'); return raw as Command; }

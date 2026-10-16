@@ -1,0 +1,47 @@
+import {_electron as electron,expect} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import path from 'node:path';
+import {build} from 'esbuild';
+await build({entryPoints:['tests/fog-render-harness.ts'],outfile:'artifacts/fog-render-harness.js',bundle:true,platform:'browser',format:'iife',globalName:'fogHarness'});
+const data=path.resolve(`.test-data/fog-${randomUUID()}`);await mkdir(data,{recursive:true});await mkdir('artifacts/screenshots',{recursive:true});
+const env={...process.env,ALERT_STUDIO_DATA:data};delete env.ELECTRON_RUN_AS_NODE;
+const errors=[];let app;
+try {
+  app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));
+  await page.getByRole('button',{name:'Создать проект →'}).click();
+  await page.getByRole('button',{name:'Туман +',exact:true}).click();
+  await page.getByLabel('Цвет тумана',{exact:true}).waitFor();
+  const canvas=page.locator('canvas').first();
+  const pixels=()=>canvas.evaluate(c=>{const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let hash=2166136261,visible=0,clear=0;for(let i=0;i<d.length;i++){hash=Math.imul(hash^d[i],16777619);if(i%4===3){if(d[i])visible++;else clear++;}}return {hash:hash>>>0,visible,clear};});
+  await expect.poll(async()=>(await pixels()).visible).toBeGreaterThan(0);
+  const initial=await pixels();assert.ok(initial.clear>0);
+  await page.screenshot({path:'artifacts/screenshots/fog-1080.png'});
+  await page.getByLabel('Время (секунды)',{exact:true}).fill('6');
+  await expect.poll(async()=>(await pixels()).hash).not.toBe(initial.hash);const six=await pixels();
+  await page.getByLabel('Время (секунды)',{exact:true}).fill('12');await expect.poll(async()=>(await pixels()).hash).not.toBe(six.hash);
+  await page.getByLabel('Время (секунды)',{exact:true}).fill('6');await expect.poll(async()=>(await pixels()).hash).toBe(six.hash);
+  await page.getByLabel('Плотность',{exact:true}).fill('0');await expect.poll(async()=>(await pixels()).visible).toBe(0);
+  await page.getByLabel('Плотность',{exact:true}).fill('55');await expect.poll(async()=>(await pixels()).hash).toBe(six.hash);
+  await page.getByRole('button',{name:'Дублировать',exact:true}).click();
+  await page.getByLabel('Цвет тумана',{exact:true}).fill('#e9a070');
+  await page.getByLabel('Форма области',{exact:true}).selectOption('rounded');
+  await page.waitForFunction(async()=>{const s=await window.studio.snapshot();return s.project.objects[1]?.settings.shape==='rounded';});
+  const state=await page.evaluate(()=>window.studio.snapshot());assert.equal(state.project.objects[0].settings.color,'#7896bf');assert.equal(state.project.objects[1].settings.color,'#e9a070');
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(1920,1080));
+  await page.screenshot({path:'artifacts/screenshots/fog-editor-1080.png'});
+  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(900,650));
+  await page.screenshot({path:'artifacts/screenshots/fog-editor-compact.png'});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.getByRole('button',{name:'RU',exact:true}).click();await page.getByLabel('Fog color',{exact:true}).waitFor();
+  const folder=path.join(data,'Project');await mkdir(folder);await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
+  await page.getByRole('button',{name:'Save',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
+  await page.getByRole('button',{name:'Open',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
+  assert.deepEqual((await page.evaluate(()=>window.studio.snapshot())).project,state.project);
+  // Test actual backend lifetime and rendering in Chromium, independently of React panel lifecycle.
+  const rendering=await page.evaluate((await readFile('artifacts/fog-render-harness.js','utf8'))+';fogHarness.run()');assert.equal(rendering.disposed,2);assert.ok(rendering.frameMilliseconds>=0);
+  assert.deepEqual(errors,[]);
+  await writeFile('artifacts/fog-ui-results.json',JSON.stringify({date:new Date().toISOString(),tests:['transparent procedural fog','seek replay pixels','zero density','independent duplicate','select control','RU/EN','folder roundtrip','900x650 and 1920x1080','backend resource disposal'],initial,six,rendering,errors},null,2));
+  console.log('Fog Electron smoke passed',rendering);
+} finally {if(app){await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}}

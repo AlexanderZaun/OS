@@ -1,0 +1,21 @@
+{
+  "id": "opening",
+  "type": "number",
+  "default": 15,
+  "min": 0,
+  "max": 90,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Просвет в центре",
+    "en": "Center opening"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Вид",
+      "en": "Appearance"
+    }
+  }
+}

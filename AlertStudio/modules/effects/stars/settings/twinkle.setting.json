@@ -1,0 +1,21 @@
+{
+  "id": "twinkle",
+  "type": "number",
+  "default": 65,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Глубина мерцания",
+    "en": "Twinkle depth"
+  },
+  "group": {
+    "id": "motion",
+    "label": {
+      "ru": "Мерцание и движение",
+      "en": "Twinkle and motion"
+    }
+  }
+}

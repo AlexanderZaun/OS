@@ -1,0 +1,18 @@
+{
+  "id": "color",
+  "type": "color",
+  "default": "#c6ddff",
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Цвет звёзд",
+    "en": "Star color"
+  },
+  "group": {
+    "id": "appearance",
+    "label": {
+      "ru": "Звёзды",
+      "en": "Stars"
+    }
+  }
+}
