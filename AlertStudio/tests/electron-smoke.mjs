@@ -1,4 +1,4 @@
-import {_electron as electron} from '@playwright/test';
+import {_electron as electron, expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
@@ -20,9 +20,9 @@ try {
   const childPromise=app.waitForEvent('window');await page.getByRole('button',{name:'Свойства ↗'}).click();
   const child=await childPromise;child.setDefaultTimeout(10000);await child.getByLabel('Текст',{exact:true}).waitFor();await child.getByLabel('Текст',{exact:true}).fill('Общее состояние');
   await page.getByLabel('Текст',{exact:true}).filter({visible:true}).waitFor();
-  assert.equal(await page.getByLabel('Текст',{exact:true}).inputValue(),'Общее состояние');
+  await expect(page.getByLabel('Текст',{exact:true})).toHaveValue('Общее состояние');
   await page.getByRole('button',{name:'Отменить',exact:true}).click();await child.getByLabel('Текст',{exact:true}).waitFor();
-  assert.equal(await child.getByLabel('Текст',{exact:true}).inputValue(),'Второй слой');await child.close();
+  await expect(child.getByLabel('Текст',{exact:true})).toHaveValue('Второй слой');await child.close();
   const projectFolder=path.join(data,'SavedProject');await mkdir(projectFolder);await dialogFolder(projectFolder);await page.getByRole('button',{name:'Сохранить',exact:true}).click();
   await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
   await page.screenshot({path:'artifacts/screenshots/editor.png'});

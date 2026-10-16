@@ -3,27 +3,58 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Project, StorageAdapter, SceneObject } from '../../contracts/project';
 import { validateProject } from '../validation-ajv/project';
+import { writeJson, replaceJson } from './durable-json';
+interface ProjectIndex { id: string; name: string; format: 1; revision: string; scene: string; }
+export interface OpenedProject { project: Project; usedBackup: boolean; index: ProjectIndex; }
 export class Files implements StorageAdapter {
   // Immutable revision tree + one authoritative index. Interrupted unreferenced revisions are never opened.
   constructor(private fault?:(file:string)=>void) {}
   async save(folder:string,project:Project) {
     validateProject(project);
+    await fs.mkdir(folder, { recursive: true });
+    let previous: ProjectIndex | undefined;
+    const exists = (file: string) => fs.stat(path.join(folder, file)).then(() => true, error => {
+      if (error.code === 'ENOENT') return false;
+      throw error;
+    });
+    const hasIndexes = await Promise.all([exists('project.json'), exists('project.previous.json')]);
+    if (hasIndexes.some(Boolean)) previous = (await this.openDetailed(folder)).index;
+    if (previous && previous.id !== project.id) throw Error('projectFolderContainsOtherProject');
     const revision=randomUUID(), base=`revisions/${revision}`;
-    async function write(file:string,data:unknown) { const target=path.join(folder,file); await fs.mkdir(path.dirname(target),{recursive:true}); await fs.writeFile(target,JSON.stringify(data,null,2)); }
+    async function write(file:string,data:unknown) { await writeJson(path.join(folder,file),data); }
     for(const object of project.objects) {
       const {settings,...metadata}=object;
       const objectPath=`${base}/scenes/main/objects/${object.id}`;
       await write(`${objectPath}/object.json`,{...metadata,settingIds:Object.keys(settings)});
+      this.fault?.('after-object-metadata');
       for(const [key,value] of Object.entries(settings)) { const file=`${objectPath}/settings/${key}.json`; this.fault?.(file); await write(file,{value}); }
     }
     await write(`${base}/scenes/main/scene.json`,{objects:project.objects.map(o=>o.id)});
     for(const key of ['width','height','background'] as const) await write(`${base}/scenes/main/settings/${key}.json`,{value:project[key]});
     await write(`${base}/modules.lock.json`,{modules:project.modules,sdk:'0.1'});
+    const index: ProjectIndex = {id:project.id,name:project.name,format:1,revision,scene:`${base}/scenes/main/scene.json`};
+    // Backup references a fully validated previous tree; an interrupted Save
+    // never changes that tree. A first Save can recover its fully written tree.
+    await replaceJson(path.join(folder,'project.previous.json'),previous ?? index);
+    this.fault?.('after-backup');
     this.fault?.('before-index');
-    await write('project.json.tmp',{id:project.id,name:project.name,format:1,revision,scene:`${base}/scenes/main/scene.json`});
-    await fs.rename(path.join(folder,'project.json.tmp'),path.join(folder,'project.json'));
+    await replaceJson(path.join(folder,'project.json'),index);
   }
   async open(folder:string):Promise<Project> {
+    return (await this.openDetailed(folder)).project;
+  }
+  async openDetailed(folder: string): Promise<OpenedProject> {
+    try {
+      return {...await this.readRevision(folder, 'project.json'), usedBackup: false};
+    } catch (primaryError) {
+      try {
+        return {...await this.readRevision(folder, 'project.previous.json'), usedBackup: true};
+      } catch (backupError) {
+        throw new AggregateError([primaryError, backupError], 'projectUnreadable');
+      }
+    }
+  }
+  private async readRevision(folder: string, indexFile: string): Promise<{project: Project; index: ProjectIndex}> {
     const root=await fs.realpath(folder);
     async function read(file:string):Promise<any> {
       if(file.includes('..')||path.isAbsolute(file)) throw Error('Unsafe project path');
@@ -31,7 +62,7 @@ export class Files implements StorageAdapter {
       if((await fs.stat(target)).size>2_000_000) throw Error('Project file too large');
       return JSON.parse(await fs.readFile(target,'utf8'));
     }
-    const index=await read('project.json');
+    const index=await read(indexFile);
     if(index.format!==1||typeof index.revision!=='string'||! /^[a-f0-9-]{36}$/.test(index.revision)) throw Error('Invalid project index');
     const base=`revisions/${index.revision}/scenes/main`;
     if(index.scene!==`${base}/scene.json`) throw Error('Invalid scene reference');
@@ -47,6 +78,7 @@ export class Files implements StorageAdapter {
       objects.push({...metadata,settings});
     }
     const lock=await read(`revisions/${index.revision}/modules.lock.json`);if(lock.sdk!=='0.1')throw Error('Unsupported SDK lock');
-    return validateProject({id:index.id,name:index.name,format:1,objects,modules:lock.modules,width:(await read(`${base}/settings/width.json`)).value,height:(await read(`${base}/settings/height.json`)).value,background:(await read(`${base}/settings/background.json`)).value});
+    const project = validateProject({id:index.id,name:index.name,format:1,objects,modules:lock.modules,width:(await read(`${base}/settings/width.json`)).value,height:(await read(`${base}/settings/height.json`)).value,background:(await read(`${base}/settings/background.json`)).value});
+    return {project, index};
   }
 }

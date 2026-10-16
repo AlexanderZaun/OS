@@ -12,7 +12,7 @@ async function run(){
     project.objects=Array.from({length:count},(_,i)=>({id:`object-${i}`,type:'text',name:`Text ${i}`,visible:true,settings:Object.fromEntries(textEffect.settings.map(s=>[s.id,s.default]))}));
     const folder=`.test-data/perf-${randomUUID()}`;const files=new Files();let start=performance.now();await files.save(folder,project);const saveMs=performance.now()-start;start=performance.now();await files.open(folder);const openMs=performance.now()-start;
     start=performance.now();for(let frame=0;frame<1000;frame++)for(const o of project.objects)textEffect.evaluate(o.settings,frame/60);const evaluationMsPerFrame=(performance.now()-start)/1000;
-    scenes.push({objects:count,files:count*6+6,saveMs,openMs,evaluationMsPerFrame,rssBytes:process.memoryUsage().rss});
+    scenes.push({objects:count,files:count*6+7,saveMs,openMs,evaluationMsPerFrame,rssBytes:process.memoryUsage().rss});
   }
   await fs.writeFile('artifacts/performance.json',JSON.stringify({date:new Date().toISOString(),platform:process.platform,node:process.version,cpu:os.cpus()[0].model,totalRam:os.totalmem(),scenes,scope:'single run; CPU evaluation only, not raster frame time or GPU/latency/export'},null,2));console.log(JSON.stringify(scenes));
 }

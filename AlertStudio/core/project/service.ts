@@ -13,7 +13,7 @@ export class Projects implements ProjectService {
   }
   snapshot(): Snapshot { return structuredClone({project:this.project, selected:this.selected, revision:this.revision, dirty:JSON.stringify(this.project)!==this.saved, canUndo:!!this.undo.length, canRedo:!!this.redo.length}); }
   markSaved() { this.saved = JSON.stringify(this.project); }
-  load(project: Project) { this.project = structuredClone(project); this.selected = null; this.undo=[]; this.redo=[]; this.revision++; this.markSaved(); }
+  load(project: Project, saved = true) { this.project = structuredClone(project); this.selected = null; this.undo=[]; this.redo=[]; this.revision++; if(saved)this.markSaved();else this.saved=''; }
   dispatch(command: Command): Snapshot {
     if (command.type === 'select') { if (command.id && !this.project.objects.some(o=>o.id===command.id)) throw Error('Missing object'); this.selected=command.id; this.revision++; return this.snapshot(); }
     if (command.type === 'undo' || command.type === 'redo') {

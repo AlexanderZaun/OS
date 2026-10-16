@@ -13,7 +13,7 @@ export function CanvasPanel(props:PanelProps) {
       raf=requestAnimationFrame(frame);
     }raf=requestAnimationFrame(frame);return()=>{cancelAnimationFrame(raf);backend.dispose();};
   },[playing,time]);
-  return <div className="canvas-panel"><div className="canvas-tools"><button onClick={()=>setPlaying(!playing)}>{t(playing?'pause':'play')}</button><label>t <input aria-label="Time (seconds)" type="number" min="0" max="120" step="0.1" value={time} onChange={e=>{setPlaying(false);setTime(Number(e.target.value));}}/> s</label><span>{props.snapshot.project.width} × {props.snapshot.project.height}</span></div>
+  return <div className="canvas-panel"><div className="canvas-tools"><button onClick={()=>setPlaying(!playing)}>{t(playing?'pause':'play')}</button><label>t <input aria-label={t('time')} type="number" min="0" max="120" step="0.1" value={time} onChange={e=>{setPlaying(false);setTime(Number(e.target.value));}}/> s</label><span>{props.snapshot.project.width} × {props.snapshot.project.height}</span></div>
     <div className="canvas-stage"><canvas ref={canvas} width={props.snapshot.project.width} height={props.snapshot.project.height} style={{background:props.snapshot.project.background==='transparent'?undefined:props.snapshot.project.background}}/></div>
     <div className="canvas-caption">{t('check')}</div></div>;
 }

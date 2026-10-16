@@ -1,0 +1,90 @@
+:root {
+  --studio-bg: #0d131e;
+  --studio-surface: #141e2d;
+  --studio-raised: #1b293b;
+  --studio-hover: #24364d;
+  --studio-sunken: #0a111c;
+  --studio-border: #2a3c53;
+  --studio-text: #dce7f5;
+  --studio-muted: #9aacc4;
+  --studio-subtle: #7288a5;
+  --studio-accent: #91c6ff;
+  --studio-accent-soft: #243c56;
+  --studio-accent-text: #0b2139;
+  --studio-danger: #ffb3ae;
+  --studio-success: #92c9b2;
+  --studio-radius: 6px;
+  --studio-panel-padding: 16px;
+  --studio-control-height: 32px;
+  --studio-shadow: 0 24px 70px #0006;
+  font: 13px 'Segoe UI', Arial, sans-serif;
+  color: var(--studio-text);
+  background: var(--studio-bg);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--studio-border) transparent; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button {
+  min-height: var(--studio-control-height);
+  padding: 6px 11px;
+  color: var(--studio-text);
+  background: var(--studio-raised);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius);
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+button:hover { background: var(--studio-hover); border-color: var(--studio-subtle); }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--studio-accent); outline-offset: 2px;
+}
+input, select, textarea {
+  min-width: 0;
+  min-height: var(--studio-control-height);
+  padding: 6px 9px;
+  color: var(--studio-text);
+  background: var(--studio-sunken);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius);
+}
+input[type='checkbox'] { min-height: 0; accent-color: var(--studio-accent); }
+input[type='color'] { width: 100%; padding: 3px; cursor: pointer; }
+label { display: flex; flex-direction: column; gap: 7px; margin: 14px 0; color: var(--studio-muted); font-size: 12px; }
+h1, h2, p { overflow-wrap: anywhere; }
+h2 { margin: 0 0 16px; font-size: 15px; font-weight: 600; }
+p { color: var(--studio-muted); line-height: 1.6; }
+.primary { background: var(--studio-accent); border-color: var(--studio-accent); color: var(--studio-accent-text); font-weight: 600; }
+.primary:hover { background: #b3d8ff; border-color: #b3d8ff; }
+.quiet-button { background: transparent; }
+.danger-button { color: var(--studio-danger); }
+.eyebrow { display: block; margin: 8px 0 12px; font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase; color: var(--studio-subtle); }
+
+/* Actual Dockview variables, mapped to the same palette as panel contents. */
+.workspace .studio-workspace {
+  --dv-background-color: var(--studio-bg);
+  --dv-group-view-background-color: var(--studio-surface);
+  --dv-tabs-and-actions-container-background-color: var(--studio-bg);
+  --dv-activegroup-visiblepanel-tab-background-color: var(--studio-surface);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--studio-surface);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--studio-bg);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--studio-bg);
+  --dv-activegroup-visiblepanel-tab-color: var(--studio-text);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--studio-muted);
+  --dv-activegroup-hiddenpanel-tab-color: var(--studio-subtle);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--studio-subtle);
+  --dv-tab-divider-color: transparent;
+  --dv-separator-border: var(--studio-border);
+  --dv-paneview-header-border-color: var(--studio-border);
+  --dv-active-sash-color: var(--studio-accent);
+  --dv-tabs-and-actions-container-height: 34px;
+  --dv-tabs-and-actions-container-font-size: 12px;
+  --dv-tab-font-size: 12px;
+  --dv-icon-hover-background-color: var(--studio-hover);
+  --dv-drag-over-background-color: #91c6ff22;
+  --dv-drag-over-border-color: var(--studio-accent);
+  --dv-floating-border: 1px solid var(--studio-border);
+  --dv-floating-box-shadow: var(--studio-shadow);
+}
