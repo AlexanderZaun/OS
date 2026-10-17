@@ -21,3 +21,5 @@ Electron bridge предоставляет конкретные методы, н
 Общий стиль: ui-kit/theme.css задаёт палитру и контролы, workspace adapter отображает их в переменные Dockview, ui-kit/Dialog.tsx управляет focus/Escape/Tab для системных in-app диалогов. Canvas checkerboard — часть preview, не экспортируемая подложка. Native Windows file dialogs/close prompt остаются системными.
 
 Контракты ResourceService, EncoderAdapter и WindowAdapter пока предварительные; ResourceService/EncoderAdapter не имеют рабочих реализаций. Workspace и окно пока подключены конкретными адаптерами. SDK не объявлен стабильным.
+
+Меню приложения реализовано в ui-kit/MenuBar.tsx, состав действующих команд задаёт Shell. File/Object вызывают прежние Desktop/Command API; Playback использует общие часы. View проходит через WorkspaceHandle и optional UI-регистрацию CanvasAction конкретного представления. MenuBar не импортирует Electron/Dockview; новая раскладка не открывает panel-manager автоматически, пользовательская раскладка сохраняется.

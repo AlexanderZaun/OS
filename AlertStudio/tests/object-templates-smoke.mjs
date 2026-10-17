@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
@@ -12,7 +13,7 @@ let app;const errors=[];
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);
   page.on('pageerror',error=>errors.push(error.message));
-  await page.getByRole('button',{name:'Создать проект →'}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);
   const state=()=>page.evaluate(()=>window.studio.snapshot());
   const properties=page.locator('.properties-panel');
   const sourceIsFirst=async(label)=>{
@@ -47,9 +48,9 @@ try{
   await sourceIsFirst('Источник звёзд');await properties.getByLabel('Источник звёзд',{exact:true}).selectOption(large.id);
   await expect(page.locator('.canvas-diagnostics')).toHaveCount(0);
   const linked=(await state()).project;
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();
+  await appCommand(page,'Отменить');
   await expect(properties.getByLabel('Источник звёзд',{exact:true})).toHaveValue('');
-  await page.getByRole('button',{name:'Повторить',exact:true}).click();
+  await appCommand(page,'Повторить');
   await expect(properties.getByLabel('Источник звёзд',{exact:true})).toHaveValue(large.id);
   await page.getByLabel('Время (секунды)',{exact:true}).fill('6');
   for(const [width,height,label] of [[1920,1080,'1080'],[900,650,'compact']]){
@@ -62,15 +63,15 @@ try{
   const child=await childPromise;await expect(child.locator('.properties-links').getByLabel('Источник звёзд',{exact:true})).toHaveValue(large.id);
   await child.getByLabel('Источник звёзд',{exact:true}).selectOption(small.id);
   await expect(properties.getByLabel('Источник звёзд',{exact:true})).toHaveValue(small.id);
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();
+  await appCommand(page,'Отменить');
   await expect(child.getByLabel('Источник звёзд',{exact:true})).toHaveValue(large.id);await child.close();
   const folder=path.join(data,'Project');await mkdir(folder);
   await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
-  await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
-  await page.getByRole('button',{name:'Открыть',exact:true}).click();await page.waitForFunction(async()=>(await window.studio.snapshot()).selected===null);
-  await expect(page.getByRole('button',{name:'Сохранить',exact:true})).toBeEnabled();
+  await appCommand(page,'Сохранить');await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
+  await appCommand(page,'Открыть');await page.waitForFunction(async()=>(await window.studio.snapshot()).selected===null);
+  await page.locator('#menu-trigger-file').click();await expect(page.getByRole('menuitem',{name:'Сохранить',exact:true})).toBeEnabled();await page.keyboard.press('Escape');
   assert.deepEqual((await state()).project,linked);
-  await page.getByRole('button',{name:'RU',exact:true}).click();
+  await appCommand(page,'RU');
   await expect(page.getByRole('button',{name:'Small stars +',exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Large stars +',exact:true})).toBeVisible();
   await page.evaluate(id=>window.studio.command({type:'select',id}),network.id);

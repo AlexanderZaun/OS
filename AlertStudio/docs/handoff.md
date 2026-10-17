@@ -60,3 +60,7 @@ Main владеет общей моделью/историей. Сохранён
 Unknown effects/values сохраняются; миграции и Canvas placeholder впереди. Loader updates/rollback, disable UI, async registration rollback, dependency error propagation, provenance и export host не завершены. Расширения доверенные, не sandbox для враждебного кода.
 
 Ручки transform, snapping, multiselect, reorder/group, pin Properties, detach/return конкретного instance, monitor recovery, сложные settings, fonts/wrapping, preset library и assets ещё не сделаны. Нет exports/GPU/installer/clean Windows verification. Тема — только ui-kit/theme.css, диалоги — ui-kit/Dialog.tsx; проверять 900×650/1920×1080 и RU/EN. Полная приёмка студии не пройдена.
+
+# Верхнее меню - 17.10.2026
+
+Разработана организация команд через восемь меню. Функциональность меню описана в application-menu.md. Общая toolbar удалена, панель управления необязательна, пользовательские раскладки сохранены. Новые эффекты из выбранного списка и стадии появления/затухания пока не реализовывались. Для этого этапа не создавать новых экспортных/анимационных пунктов без работающей реализации. Изменение .gitignore (удаление /tmp/) существовало до этого этапа и сохранено.

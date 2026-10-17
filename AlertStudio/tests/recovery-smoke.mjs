@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import { _electron as electron, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -47,11 +48,11 @@ async function waitSaved(page, folder) {
 
 try {
   let primary = await launch('primary');
-  await primary.page.getByRole('button',{name:'Создать проект →'}).click();
+  await primary.page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(primary.page);
   await primary.page.getByRole('button',{name:'Текст +',exact:true}).click();
   await primary.page.getByLabel('Текст',{exact:true}).fill('Сохранённый проект');
   await selectFolder(primary.app,projectFolder);
-  await primary.page.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await appCommand(primary.page,'Сохранить');
   await waitSaved(primary.page,projectFolder);
   const originalIndex = await readFile(path.join(projectFolder,'project.json'),'utf8');
   await primary.page.getByLabel('Текст',{exact:true}).fill('Черновик после аварии');
@@ -66,14 +67,14 @@ try {
 
   const secondary = await launch('secondary');
   await selectFolder(secondary.app,projectFolder);
-  await secondary.page.getByRole('button',{name:'Открыть',exact:true}).click();
+  await appCommand(secondary.page,'Открыть');
   await expect(secondary.page.getByRole('status')).toContainText('уже открыта в другом процессе');
   assert.equal((await secondary.page.evaluate(()=>window.studio.snapshot())).project.objects.length,0);
   await crash(secondary.app);
   await crash(primary.app); // no before-quit cleanup: exercise crash recovery
 
   primary = await launch('primary');
-  await primary.page.getByRole('button',{name:/Черновики восстановления/}).click();
+  await appCommand(primary.page,'Черновики восстановления');
   const recoveryDialog = primary.page.getByRole('dialog',{name:'Черновики восстановления'});
   await recoveryDialog.getByRole('button',{name:'Восстановить черновик'}).waitFor();
   await primary.page.screenshot({path:path.join(screenshotRoot,'recovery.png')});
@@ -85,22 +86,22 @@ try {
   assert.equal((await primary.page.evaluate(()=>window.studio.session())).folder,null);
   assert.equal(await readFile(path.join(projectFolder,'project.json'),'utf8'),originalIndex);
   await selectFolder(primary.app,restoredFolder);
-  await primary.page.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await appCommand(primary.page,'Сохранить');
   await waitSaved(primary.page,restoredFolder);
   assert.deepEqual(await primary.page.evaluate(()=>window.studio.recoveries()),[]);
 
   await writeFile(path.join(projectFolder,'project.json'),'{damaged');
   await selectFolder(primary.app,projectFolder);
-  await primary.page.getByRole('button',{name:'Открыть',exact:true}).click();
+  await appCommand(primary.page,'Открыть');
   await primary.page.getByRole('alert').filter({hasText:'Основной индекс проекта повреждён'}).waitFor();
   assert.equal((await primary.page.evaluate(()=>window.studio.snapshot())).project.objects[0].settings.content,'Сохранённый проект');
   assert.equal((await primary.page.evaluate(()=>window.studio.snapshot())).dirty,true);
   await primary.page.screenshot({path:path.join(screenshotRoot,'backup-recovery.png')});
-  await primary.page.getByRole('button',{name:'Сохранить',exact:true}).click();
+  await appCommand(primary.page,'Сохранить');
   await waitSaved(primary.page,projectFolder);
 
   await primary.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(900,650));
-  await primary.page.getByRole('button',{name:'Расширения',exact:true}).click();
+  await appCommand(primary.page,'Расширения');
   await primary.page.getByRole('dialog',{name:'Расширения'}).waitFor();
   await primary.page.screenshot({path:path.join(screenshotRoot,'extensions-compact.png')});
   await primary.page.keyboard.press('Escape');
@@ -121,7 +122,7 @@ try {
   running.delete(primary.app);
   primary = await launch('primary');
   assert.deepEqual(await primary.page.evaluate(()=>window.studio.recoveries()),[]);
-  await selectFolder(primary.app,projectFolder);await primary.page.getByRole('button',{name:'Открыть',exact:true}).click();
+  await selectFolder(primary.app,projectFolder);await appCommand(primary.page,'Открыть');
   await expect.poll(async()=>primary.page.evaluate(async()=>(await window.studio.snapshot()).project.objects[0]?.settings.content)).toBe('Черновик при обычном выходе');
   assert.deepEqual(errors,[]);
   await writeFile('artifacts/recovery-ui-results.json',JSON.stringify({date:new Date().toISOString(),platform:process.platform,root,tests:['debounced draft leaves explicit project unchanged','playback leaves revision unchanged','second process rejected','crash recovery from UI','restore is unsaved copy','Save clears recovery candidate','damaged index opens previous version with notice','compact dialog Escape and viewport','1920x1080 viewport','Save and close persists latest edit and dismisses recovery candidate'],errors},null,2));

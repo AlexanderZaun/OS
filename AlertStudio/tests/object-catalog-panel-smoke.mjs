@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -14,7 +15,7 @@ function groupFor(value,id){
 }
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',error=>errors.push(error.message));
-  await isolateDesktopPointer(app,page);await page.getByRole('button',{name:'Создать проект →'}).click();
+  await isolateDesktopPointer(app,page);await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);
   await expect(page.getByRole('tab',{name:'Объекты',exact:true})).toHaveCount(1);
   await expect(page.locator('.tool-rail')).toHaveCount(0);
   const state=()=>page.evaluate(()=>window.studio.snapshot()),before=await state();
@@ -53,14 +54,14 @@ try{
   for(const [id,panel] of Object.entries(legacy.panels))assert.deepEqual(upgraded.panels[id],panel);
   assert.deepEqual(await state(),added);
   // Inspect the initial layout after exercising arbitrary user docking and migration.
-  await page.getByRole('button',{name:'Сбросить рабочую область',exact:true}).click();
+  await appCommand(page,'Сбросить рабочую область');
   await expect(page.getByRole('tab',{name:'Объекты',exact:true})).toHaveCount(1);
   for(const [width,height,label] of [[1920,1080,'1080'],[900,650,'compact']]){
     await resizeWindow(app,page,width,height);await waitForCanvasFit(page);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     await page.screenshot({path:`artifacts/screenshots/object-catalog-panel-${label}.png`});
   }
-  await page.getByRole('button',{name:'RU',exact:true}).click();await expect(page.getByRole('tab',{name:'Objects',exact:true})).toHaveCount(1);
+  await appCommand(page,'RU');await expect(page.getByRole('tab',{name:'Objects',exact:true})).toHaveCount(1);
   assert.deepEqual(errors,[]);
   await writeFile('artifacts/object-catalog-panel-ui-results.json',JSON.stringify({date:new Date().toISOString(),
     tests:['catalog is a docked panel','native tab drag and reload','detached catalog adds to shared project','cross-window category synchronization','close persists and manager reopens catalog','legacy workspace upgrade','RU/EN','900x650 and 1920x1080'],layout,errors},null,2));

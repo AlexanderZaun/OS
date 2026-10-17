@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -11,20 +12,20 @@ try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>{errors.push(e.message);console.error(e);});
   await isolateDesktopPointer(app,page);
   await app.evaluate(({dialog})=>{dialog.showMessageBox=async()=>({response:1,checkboxChecked:false});});
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Сцена-пример',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await appCommand(page,'Сцена-пример');
   await expect.poll(()=>page.evaluate(async()=>(await window.studio.snapshot()).project.objects.length)).toBe(7);await resizeWindow(app,page,1920,1080);
   const state=()=>page.evaluate(()=>window.studio.snapshot()),layers=page.locator('.layers-panel'),rows=layers.locator('.layer-row');
   const original=(await state()).project,large=original.objects.at(-1),small=original.objects.at(-2);
   await layers.getByRole('button',{name:/^Крупные звёзды/}).click();await layers.getByRole('button',{name:'Переименовать слой',exact:true}).click();
   let dialog=page.getByRole('dialog',{name:'Переименовать слой',exact:true});await expect(dialog).toBeVisible();await dialog.getByLabel('Название слоя',{exact:true}).fill('   ');await expect(dialog.getByRole('button',{name:'Применить название',exact:true})).toBeDisabled();
   await dialog.getByLabel('Название слоя',{exact:true}).fill('Опорные звёзды');await page.screenshot({path:'artifacts/screenshots/layers-rename-1080.png'});await dialog.getByRole('button',{name:'Применить название',exact:true}).click();
-  await expect(layers.getByRole('button',{name:/^Опорные звёзды/})).toBeVisible();await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect(layers.getByRole('button',{name:/^Крупные звёзды/})).toBeVisible();await page.getByRole('button',{name:'Повторить',exact:true}).click();await expect(layers.getByRole('button',{name:/^Опорные звёзды/})).toBeVisible();
+  await expect(layers.getByRole('button',{name:/^Опорные звёзды/})).toBeVisible();await appCommand(page,'Отменить');await expect(layers.getByRole('button',{name:/^Крупные звёзды/})).toBeVisible();await appCommand(page,'Повторить');await expect(layers.getByRole('button',{name:/^Опорные звёзды/})).toBeVisible();
   await layers.getByRole('button',{name:/^Опорные звёзды/}).press('F2');await expect(dialog).toBeVisible();await dialog.getByLabel('Название слоя',{exact:true}).fill('Отменённое имя');await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);assert.equal((await state()).project.objects.at(-1).name,'Опорные звёзды');
   const beforeFilter=await state();await layers.getByLabel('Найти слои',{exact:true}).fill('тУмАн');await expect(rows).toHaveCount(4);await layers.getByLabel('Тип слоя',{exact:true}).selectOption('stars');await expect(rows).toHaveCount(0);await expect(layers.getByText('Подходящих слоёв нет',{exact:true})).toBeVisible();assert.deepEqual(await state(),beforeFilter);
   await layers.getByRole('button',{name:'Сбросить фильтры',exact:true}).click();await expect(rows).toHaveCount(7);await layers.getByLabel('Тип слоя',{exact:true}).selectOption('stars');await expect(rows).toHaveCount(2);
   const target=layers.locator(`[data-layer-id="${small.id}"]`);
   await layers.getByRole('button',{name:'Перетащить слой Опорные звёзды',exact:true}).dragTo(target,{targetPosition:{x:65,y:45}});
-  await expect.poll(async()=>(await state()).project.objects.at(-1).id).toBe(small.id);await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect.poll(async()=>(await state()).project.objects.at(-1).id).toBe(large.id);
+  await expect.poll(async()=>(await state()).project.objects.at(-1).id).toBe(small.id);await appCommand(page,'Отменить');await expect.poll(async()=>(await state()).project.objects.at(-1).id).toBe(large.id);
   await layers.getByLabel('Тип слоя',{exact:true}).selectOption('');await layers.getByRole('button',{name:'На самый низ',exact:true}).click();await expect.poll(async()=>(await state()).project.objects[0].id).toBe(large.id);await expect(layers.getByRole('button',{name:'На самый низ',exact:true})).toBeDisabled();
   await layers.getByRole('button',{name:'На самый верх',exact:true}).click();await expect.poll(async()=>(await state()).project.objects.at(-1).id).toBe(large.id);await expect(layers.getByRole('button',{name:'На самый верх',exact:true})).toBeDisabled();await page.screenshot({path:'artifacts/screenshots/layers-1080.png'});
   const childPromise=app.waitForEvent('window');await page.getByRole('button',{name:'Слои ↗',exact:true}).click();const child=await childPromise;await expect(child.getByRole('button',{name:/^Опорные звёзды/})).toBeVisible();
@@ -36,7 +37,7 @@ try{
   const listBox=await layers.locator('.layers-list').boundingBox();assert.ok(listBox.height>=50,'Compact panel keeps at least one complete layer row visible');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   const expected=(await state()).project,folder=path.join(data,'Project');await mkdir(folder);await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
-  await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);await page.getByRole('button',{name:'Открыть',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);assert.deepEqual((await state()).project,expected);
-  await page.getByRole('button',{name:'RU',exact:true}).click();await layers.getByLabel('Find layers',{exact:true}).fill('Общие');await expect(rows).toHaveCount(1);await layers.getByRole('button',{name:/^Общие звёзды/}).click();await expect(layers.getByRole('button',{name:'Rename layer',exact:true})).toBeVisible();
+  await appCommand(page,'Сохранить');await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);await appCommand(page,'Открыть');await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);assert.deepEqual((await state()).project,expected);
+  await appCommand(page,'RU');await layers.getByLabel('Find layers',{exact:true}).fill('Общие');await expect(rows).toHaveCount(1);await layers.getByRole('button',{name:/^Общие звёзды/}).click();await expect(layers.getByRole('button',{name:'Rename layer',exact:true})).toBeVisible();
   assert.deepEqual(errors,[]);await writeFile('artifacts/layers-ui-results.json',JSON.stringify({date:new Date().toISOString(),checks:['rename/validation/undo/redo/F2/Escape','search/type/empty filters do not mutate document','native drag reorder and one undo','top/bottom boundaries','detached shared rename','folder save/open','RU/EN','900x650 and 1920x1080'],errors},null,2));console.log('Layers Electron smoke passed');
 }catch(error){console.error('Layer errors',errors);if(app)console.error(await app.firstWindow().then(p=>p.evaluate(async()=>({state:await window.studio.snapshot(),text:document.body.innerText.slice(0,2000)}))));throw error;}finally{if(app){for(const [i,p] of app.windows().entries())await p.screenshot({path:`artifacts/screenshots/layers-last-${i}.png`}).catch(()=>{});await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}}

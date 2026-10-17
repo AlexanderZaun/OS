@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
@@ -12,7 +13,7 @@ await build({entryPoints:['tests/linked-render-harness.ts'],outfile:'artifacts/l
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await app.evaluate(({dialog})=>{dialog.showMessageBox=async()=>({response:1,checkboxChecked:false});});
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Сцена-пример',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await appCommand(page,'Сцена-пример');
   const state=()=>page.evaluate(()=>window.studio.snapshot());
   await page.waitForFunction(async()=>(await window.studio.snapshot()).project.objects.length===7);
   const project=(await state()).project,large=project.objects.find(o=>o.name==='Крупные звёзды'),small=project.objects.find(o=>o.name==='Мелкие звёзды'),network=project.objects.find(o=>o.type==='network');
@@ -30,19 +31,19 @@ try{
   await page.getByRole('button',{name:/^Сеть крупных звёзд/}).click();await expect(page.getByLabel('Источник звёзд',{exact:true})).toHaveValue(large.id);
   await expect(page.getByLabel('Перестроение сети',{exact:true})).toHaveValue('dynamic');
   await page.getByLabel('Перестроение сети',{exact:true}).selectOption('stable');await expect(page.getByLabel('Перестроение сети',{exact:true})).toHaveValue('stable');
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect(page.getByLabel('Перестроение сети',{exact:true})).toHaveValue('dynamic');
+  await appCommand(page,'Отменить');await expect(page.getByLabel('Перестроение сети',{exact:true})).toHaveValue('dynamic');
   await page.getByLabel('Перестроение сети',{exact:true}).selectOption('stable');await expect(page.getByLabel('Перестроение сети',{exact:true})).toHaveValue('stable');
   await page.getByLabel('Перестроение сети',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'artifacts/screenshots/topology-1080.png'});
   await page.getByRole('button',{name:'Слой ниже',exact:true}).click();await page.waitForFunction(async(id)=>(await window.studio.snapshot()).project.objects.findIndex(o=>o.id===id)===3,network.id);
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();await page.waitForFunction(async(id)=>(await window.studio.snapshot()).project.objects.findIndex(o=>o.id===id)===4,network.id);
+  await appCommand(page,'Отменить');await page.waitForFunction(async(id)=>(await window.studio.snapshot()).project.objects.findIndex(o=>o.id===id)===4,network.id);
   await page.getByRole('checkbox',{name:'Видимость Крупные звёзды',exact:true}).click();await expect(page.getByRole('checkbox',{name:'Видимость Крупные звёзды',exact:true})).not.toBeChecked();await expect(page.locator('.canvas-diagnostics')).toHaveCount(0);
   await page.locator('.layers-panel').getByRole('button',{name:/^Крупные звёзды/}).click();await expect(page.getByLabel('Источник тумана',{exact:true})).toHaveValue(large.settings.source);
   await page.getByLabel('Смещение X',{exact:true}).fill('25');await page.waitForFunction(async(id)=>(await window.studio.snapshot()).project.objects.find(o=>o.id===id).settings.offsetX===25,large.id);
   await page.getByRole('button',{name:'Удалить',exact:true}).click();await expect(page.locator('.canvas-diagnostics')).toContainText('Проверьте связи');
   await page.getByRole('button',{name:/^Сеть крупных звёзд/}).click();await expect(page.getByLabel('Источник звёзд',{exact:true})).toHaveValue(large.id);
   await page.getByLabel('Источник звёзд',{exact:true}).selectOption(small.id);await expect(page.locator('.canvas-diagnostics')).toContainText('Достигнут предел сети');
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect(page.locator('.canvas-diagnostics')).toContainText('Проверьте связи');
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect(page.locator('.canvas-diagnostics')).toHaveCount(0);
+  await appCommand(page,'Отменить');await expect(page.locator('.canvas-diagnostics')).toContainText('Проверьте связи');
+  await appCommand(page,'Отменить');await expect(page.locator('.canvas-diagnostics')).toHaveCount(0);
   await page.getByRole('checkbox',{name:'Видимость Крупные звёзды',exact:true}).click();await expect(page.getByRole('checkbox',{name:'Видимость Крупные звёзды',exact:true})).toBeChecked();
   // A detached canvas joins the same transport and can control all windows.
   const childPromise=app.waitForEvent('window');await page.getByRole('button',{name:'Холст ↗',exact:true}).click();const child=await childPromise;child.setDefaultTimeout(10000);child.on('pageerror',e=>errors.push(e.message));
@@ -96,10 +97,10 @@ try{
   await page.getByLabel('Маска линий',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'artifacts/screenshots/line-mask-compact.png'});
   await page.locator('.layers-panel').getByRole('button',{name:/^Мелкие звёзды/}).click();await page.getByLabel('Распределение по облаку',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'artifacts/screenshots/density-compact.png'});
   const expected=(await state()).project,folder=path.join(data,'Project');await mkdir(folder);await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
-  await page.getByRole('button',{name:'Сохранить',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
-  await page.getByRole('button',{name:'Открыть',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
+  await appCommand(page,'Сохранить');await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
+  await appCommand(page,'Открыть');await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
   assert.deepEqual((await state()).project,expected);await expect(page.getByLabel('Время (секунды)',{exact:true})).toHaveValue('0');
-  await page.getByRole('button',{name:'RU',exact:true}).click();await expect(page.getByRole('button',{name:'Example scene',exact:true})).toBeVisible();
+  await appCommand(page,'RU');await page.locator('#menu-trigger-file').click();await expect(page.getByRole('menuitem',{name:'Example scene',exact:true})).toBeVisible();await page.keyboard.press('Escape');
   await page.getByRole('button',{name:/^Сеть крупных звёзд/}).click();await expect(page.getByLabel('Dash speed',{exact:true})).toHaveValue('-13');await expect(page.getByLabel('Outline width',{exact:true})).toHaveValue('0.5');
   await expect(page.getByLabel('Line mask',{exact:true})).toHaveValue('density');await expect(page.getByLabel('Mask strength',{exact:true})).toHaveValue('85');
   await expect(page.getByLabel('Network topology',{exact:true})).toHaveValue('stable');await page.getByLabel('Network topology',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'artifacts/screenshots/topology-compact.png'});

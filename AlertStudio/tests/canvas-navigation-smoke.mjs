@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -13,7 +14,7 @@ try {
   const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await isolateDesktopPointer(app,page);
   await page.evaluate(()=>{window.navigationEvents=[];for(const type of ['pointerdown','pointermove','pointerup','lostpointercapture','blur','keydown','keyup'])window.addEventListener(type,e=>window.navigationEvents.push({type,key:e.key,hovered:document.querySelector('.canvas-stage:hover')?.className,active:document.activeElement?.outerHTML.slice(0,150),x:e.clientX,y:e.clientY,target:e.target?.className,mode:document.querySelector('.canvas-stage')?.dataset.navigation}),true);});
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Туман +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Туман +',exact:true}).click();
   await page.getByLabel('Цвет тумана',{exact:true}).waitFor();
   const viewport=page.getByRole('region',{name:'Область холста'}),canvas=viewport.locator('canvas');
   const zoom=page.getByRole('combobox',{name:'Масштаб холста'});
@@ -65,7 +66,7 @@ try {
   const cameras=page.locator('select[aria-label="Масштаб холста"]');
   await expect(cameras).toHaveCount(2);await expect(cameras.nth(0)).toHaveValue('2');await expect(cameras.nth(1)).toHaveValue('fit');
   assert.deepEqual(await page.evaluate(()=>window.studio.snapshot()),before);
-  await page.getByRole('button',{name:'RU',exact:true}).click();await expect(page.locator('select[aria-label="Canvas zoom"]').last()).toHaveValue('fit');
+  await appCommand(page,'RU');await expect(page.locator('select[aria-label="Canvas zoom"]').last()).toHaveValue('fit');
   assert.deepEqual(errors,[]);
   await writeFile('artifacts/navigation-ui-results.json',JSON.stringify({date:new Date().toISOString(),tests:['fit and responsive resize','wheel zoom anchored at pointer','zoom buttons','100% without resizing bitmap','Space + drag pan','middle mouse pan','Home and 1 keys','800% limit','900x650 and 1920x1080','independent panel camera','navigation leaves project/history unchanged','RU/EN'],errors},null,2));
   console.log('Canvas navigation Electron smoke passed');

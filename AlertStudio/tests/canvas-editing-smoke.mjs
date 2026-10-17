@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -11,7 +12,7 @@ try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await isolateDesktopPointer(app,page);
   await page.evaluate(()=>{window.editEvents=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture','blur'])window.addEventListener(type,e=>{const c=document.querySelector('canvas')?.getBoundingClientRect();window.editEvents.push({type,x:e.clientX,y:e.clientY,id:e.pointerId,buttons:e.buttons,target:e.target?.className,mode:document.querySelector('.canvas-stage')?.dataset.navigation,canvas:c?{x:c.x,y:c.y,width:c.width,height:c.height}:null});},true);});
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
   await page.getByLabel('Режим поля',{exact:true}).selectOption('field');
   for(const [label,value] of [['Центр X','500'],['Центр Y','400'],['Ширина поля','400'],['Высота поля','300'],['Поворот поля','30']])await page.getByLabel(label,{exact:true}).fill(value);
   const state=()=>page.evaluate(()=>window.studio.snapshot());
@@ -31,8 +32,8 @@ try{
   assert.deepEqual(await state(),before); // Drag is preview-only until release.
   await page.mouse.up();await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(680);
   let moved=await state();assert.equal(moved.project.objects[0].settings.y,490);assert.equal(moved.revision,before.revision+1);
-  await page.getByRole('button',{name:'Отменить',exact:true}).click();await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(500);assert.equal((await state()).project.objects[0].settings.y,400);
-  await page.getByRole('button',{name:'Повторить',exact:true}).click();await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(680);
+  await appCommand(page,'Отменить');await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(500);assert.equal((await state()).project.objects[0].settings.y,400);
+  await appCommand(page,'Повторить');await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(680);
   before=await state();p=await point(680,490);await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+35,p.y+25,{steps:4});await page.keyboard.press('Escape');await page.mouse.up();assert.deepEqual(await state(),before);
   // Authoritative edits arriving during a drag cancel local preview instead of overwriting them.
   p=await point(680,490);await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+40,p.y+30,{steps:4});

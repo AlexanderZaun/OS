@@ -1,13 +1,24 @@
-import { createContext, useContext, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import { DockviewReact, type DockviewApi, type IDockviewPanelProps } from 'dockview-react';
 import 'dockview-react/dist/styles/dockview.css';
-import type { Panel, PanelProps } from '../../sdk/ui';
-const PanelContext=createContext<{panels:Panel[];props:PanelProps}|null>(null);
-function Content(p:IDockviewPanelProps<{type:string}>){const current=useContext(PanelContext)!;const panel=current.panels.find(x=>x.id===p.params.type);if(!panel)return null;const C=panel.component;return <C {...current.props}/>;}
+import type { CanvasAction, Panel, PanelProps } from '../../sdk/ui';
+const PanelContext=createContext<{panels:Panel[];props:PanelProps;register(id:string,handler:(action:CanvasAction)=>void):()=>void;activateCanvas(id:string):void}|null>(null);
+function Content(p:IDockviewPanelProps<{type:string}>){
+  const current=useContext(PanelContext)!;
+  const registerCanvasActions=useMemo(()=>((handler:(action:CanvasAction)=>void)=>current.register(p.api.id,handler)),[current.register,p.api.id]);
+  const panel=current.panels.find(x=>x.id===p.params.type);if(!panel)return null;const C=panel.component;
+  return <div style={{height:'100%'}} onPointerDownCapture={()=>{if(p.params.type==='canvas')current.activateCanvas(p.api.id);}} onFocusCapture={()=>{if(p.params.type==='canvas')current.activateCanvas(p.api.id);}}><C {...current.props} registerCanvasActions={registerCanvasActions}/></div>;
+}
 const components={panel:Content};
-export interface WorkspaceHandle {showPanels():void;}
+export interface WorkspaceHandle {showPanels():void;show(type:string):void;add(type:string):void;canvas(action:CanvasAction):void;}
 export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelProps;instance:number;onDetach(type:string):void}>(function Workspace({panels,props,instance,onDetach},ref) {
   const api=useRef<DockviewApi|null>(null),layoutListener=useRef<{dispose():void}|null>(null);
+  const canvasHandlers=useRef(new Map<string,(action:CanvasAction)=>void>()),lastCanvas=useRef<string|null>(null),pendingCanvas=useRef<CanvasAction|null>(null);
+  const register=useMemo(()=>((id:string,handler:(action:CanvasAction)=>void)=>{
+    canvasHandlers.current.set(id,handler);
+    if(pendingCanvas.current){const action=pendingCanvas.current;pendingCanvas.current=null;handler(action);}
+    return()=>{canvasHandlers.current.delete(id);};
+  }),[]);
   function open(type:string){
     const definition=panels.find(panel=>panel.id===type),current=api.current;if(!definition||!current)return;
     if(type==='objects'&&!current.panels.some(panel=>panel.params?.type===type)){
@@ -30,11 +41,16 @@ export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelPro
       ...(type==='objects'?{minimumWidth:155}:{}),
       ...(target?{position:{referencePanel:target.id,direction:'below' as const}}:{})});
   }
-  useImperativeHandle(ref,()=>({showPanels:()=>open('panel-manager')}));
+  function show(type:string){const existing=api.current?.panels.find(panel=>panel.params?.type===type);if(existing)existing.api.setActive();else open(type);}
+  useImperativeHandle(ref,()=>({showPanels:()=>show('panel-manager'),show,add:open,canvas:action=>{
+    const current=api.current;
+    const target=[current?.activePanel?.id,lastCanvas.current,...canvasHandlers.current.keys()].find(id=>id&&canvasHandlers.current.has(id));
+    if(target){current?.getPanel(target)?.api.setActive();canvasHandlers.current.get(target)?.(action);}else{pendingCanvas.current=action;show('canvas');}
+  }}));
   useEffect(()=>()=>layoutListener.current?.dispose(),[]);
   useEffect(()=>{for(const panel of api.current?.panels??[]){const type=panel.params?.type;const definition=panels.find(p=>p.id===type);if(definition)panel.api.setTitle(definition.label[props.language]);}},[props.language]);
   const contentProps:PanelProps={...props,workspace:{panels:panels.map(({id,label})=>({id,label})),open,detach:onDetach}};
-  return <PanelContext.Provider value={{panels,props:contentProps}}><div className="workspace"><DockviewReact key={instance} components={components} className="dockview-theme-dark studio-workspace" onReady={e=>{
+  return <PanelContext.Provider value={{panels,props:contentProps,register,activateCanvas:id=>{lastCanvas.current=id;}}}><div className="workspace"><DockviewReact key={instance} components={components} className="dockview-theme-dark studio-workspace" onReady={e=>{
     api.current=e.api;layoutListener.current?.dispose();
     const save=()=>{try{localStorage.setItem('alert-studio-workspace',JSON.stringify(e.api.toJSON()));}catch(error){console.warn(error);}};
     let restored=false,saved:string|null=null;
@@ -49,9 +65,7 @@ export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelPro
     let catalogMigrated=false;try{catalogMigrated=localStorage.getItem('alert-studio-object-catalog-v1')==='true';}catch{}
     if(!restored||!catalogMigrated){if(!e.api.panels.some(panel=>panel.params?.type==='objects'))open('objects');}
     try{localStorage.setItem('alert-studio-object-catalog-v1','true');}catch{}
-    let migrated=false;try{migrated=localStorage.getItem('alert-studio-panel-manager-v1')==='true';}catch{}
-    if(!restored||!migrated)open('panel-manager');
-    try{localStorage.setItem('alert-studio-panel-manager-v1','true');}catch{}
+    // The manager is optional. Restore existing user layouts without injecting it.
     layoutListener.current=e.api.onDidLayoutChange(save);save();
   }}/></div></PanelContext.Provider>;
 });

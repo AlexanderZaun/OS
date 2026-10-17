@@ -69,6 +69,28 @@ const sessionRu:typeof sessionEn = {
   noSource:'Выберите источник',missingSource:'Источник отсутствует',selectSource:'Выбрать источник',layerUp:'Слой выше',layerDown:'Слой ниже',sourceProblem:'Проверьте связи с источниками',cycleProblem:'Циклические связи источников',effectProblem:'Эффект недоступен или завершился с ошибкой',limitProblem:'Достигнут предел сети',loop:'Повтор',duration:'Длительность повтора',playbackSpeed:'Скорость воспроизведения',
   canvasNavigation:'Колесо: масштаб · Пробел / средняя кнопка / H: холст · Shift + колесо: по горизонтали · F: вписать выбранное · Home: сцена · 1: 100%',
 };
-const dictionaries = {en:{...en,...sessionEn},ru:{...ru,...sessionRu}};
+const menuEn={menuBar:'Application menu',menuFile:'File',menuEdit:'Edit',menuScene:'Scene',menuObject:'Object',menuPlayback:'Playback',menuView:'View',menuWindow:'Window',menuHelp:'Help',
+  sceneInfo:'Scene information',projectInfo:'Project information',showPanel:'Show panel',addView:'Add a view',separateWindow:'Separate window',language:'Interface language',
+  actualSize:'Actual size · 100%',restartPlayback:'Go to start',shortcuts:'Keyboard shortcuts',about:'About AlertStudio',
+  sceneInfoHint:'The scene size is fixed independently of the window. Width, height and background are chosen when creating a project.',
+  shortcutsHint:'F10: focus the menu. Arrows: choose a menu or command. Enter: execute. Escape: close.',
+  shortcutsProject:'Ctrl+N: new project · Ctrl+O: open · Ctrl+S: save · Ctrl+Shift+S: save as · Ctrl+Z: undo · Ctrl+Shift+Z: redo',
+  shortcutsCanvas:'Inside the canvas: Home fits the scene, 1 sets 100%, F fits the selection, H toggles the hand. Wheel zooms; Space or middle mouse pans.',
+  aboutText:'AlertStudio 0.1.0 · Offline editor for stream graphics. Experimental SDK 0.1. Canvas 2D renderer.',
+  aboutLimits:'Appearance and disappearance stages, audio editing and media export are not implemented yet.',
+  objectActions:'Selected object',sceneObjects:'Objects',showCatalog:'Show object catalog',renameObject:'Rename object',
+};
+const menuRu:typeof menuEn={menuBar:'Меню приложения',menuFile:'Файл',menuEdit:'Правка',menuScene:'Сцена',menuObject:'Объект',menuPlayback:'Воспроизведение',menuView:'Вид',menuWindow:'Окно',menuHelp:'Справка',
+  sceneInfo:'Сведения о сцене',projectInfo:'Сведения о проекте',showPanel:'Показать панель',addView:'Добавить представление',separateWindow:'Отдельное окно',language:'Язык интерфейса',
+  actualSize:'Исходный масштаб · 100%',restartPlayback:'К началу',shortcuts:'Горячие клавиши',about:'О программе AlertStudio',
+  sceneInfoHint:'Размер сцены не зависит от размера окна. Ширина, высота и фон задаются при создании проекта.',
+  shortcutsHint:'F10: перейти в меню. Стрелки: выбрать меню или команду. Enter: выполнить. Escape: закрыть.',
+  shortcutsProject:'Ctrl+N: новый проект · Ctrl+O: открыть · Ctrl+S: сохранить · Ctrl+Shift+S: сохранить как · Ctrl+Z: отменить · Ctrl+Shift+Z: повторить',
+  shortcutsCanvas:'На холсте: Home вписывает сцену, 1 устанавливает 100%, F вписывает выбранное, H переключает руку. Колесо меняет масштаб; пробел или средняя кнопка перемещают холст.',
+  aboutText:'AlertStudio 0.1.0 · Офлайн-редактор графики для стримов. Экспериментальный SDK 0.1. Отрисовка Canvas 2D.',
+  aboutLimits:'Стадии появления и затухания, редактирование звука и экспорт медиа пока не реализованы.',
+  objectActions:'Выбранный объект',sceneObjects:'Объектов',showCatalog:'Показать каталог объектов',renameObject:'Переименовать объект',
+};
+const dictionaries = {en:{...en,...sessionEn,...menuEn},ru:{...ru,...sessionRu,...menuRu}};
 export type TranslationKey = keyof typeof dictionaries.en;
 export function translator(language:Language){return (key:TranslationKey)=>{const found=dictionaries[language][key];if(!found)console.warn('Missing translation',language,key);return found??dictionaries.en[key]??key;};}

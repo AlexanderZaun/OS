@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -11,7 +12,7 @@ const env={...process.env,ALERT_STUDIO_DATA:data};delete env.ELECTRON_RUN_AS_NOD
 const errors=[];let app;
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
   // Exercise standalone playback explicitly; the creation template starts in linked cloud mode.
   await page.getByLabel('Режим поля',{exact:true}).selectOption('field');
   await page.getByLabel('Количество звёзд',{exact:true}).fill('220');
@@ -40,10 +41,10 @@ try{
   const state=await page.evaluate(()=>window.studio.snapshot());assert.equal(state.project.objects[0].settings.seed,73);assert.equal(state.project.objects[0].settings.color,'#c6ddff');
   await resizeWindow(app,page,1920,1080);await waitForCanvasFit(page);await page.screenshot({path:'artifacts/screenshots/stars-1080.png'});
   await resizeWindow(app,page,900,650);await waitForCanvasFit(page);await page.screenshot({path:'artifacts/screenshots/stars-compact.png'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await page.getByRole('button',{name:'RU',exact:true}).click();await page.getByLabel('Star color',{exact:true}).waitFor();
+  await appCommand(page,'RU');await page.getByLabel('Star color',{exact:true}).waitFor();
   const folder=path.join(data,'Project');await mkdir(folder);await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
-  await page.getByRole('button',{name:'Save',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
-  await page.getByRole('button',{name:'Open',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
+  await appCommand(page,'Save');await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
+  await appCommand(page,'Open');await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
   assert.deepEqual((await page.evaluate(()=>window.studio.snapshot())).project,state.project);
   const rendering=await page.evaluate((await readFile('artifacts/stars-render-harness.js','utf8'))+';starsHarness.run()');assert.equal(rendering.spritesCreated,12);assert.equal(rendering.spritesReleased,12);assert.deepEqual(errors,[]);
   await writeFile('artifacts/stars-ui-results.json',JSON.stringify({date:new Date().toISOString(),tests:['transparent stars','6→12→6 pixel replay','zero count','pause preserves frame and resume continues','playback leaves snapshot unchanged','independent copies','clusters','RU/EN','save/open','compact and Full HD','1000/5000 star measurements','bounded sprite cache and disposal'],initial,six,rendering,errors},null,2));

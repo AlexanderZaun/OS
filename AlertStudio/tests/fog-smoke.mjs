@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
@@ -10,7 +11,7 @@ const env={...process.env,ALERT_STUDIO_DATA:data};delete env.ELECTRON_RUN_AS_NOD
 const errors=[];let app;
 try {
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));
-  await page.getByRole('button',{name:'Создать проект →'}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);
   await page.getByRole('button',{name:'Туман +',exact:true}).click();
   await page.getByLabel('Цвет тумана',{exact:true}).waitFor();
   const canvas=page.locator('canvas').first();
@@ -34,10 +35,10 @@ try {
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(900,650));
   await page.screenshot({path:'artifacts/screenshots/fog-editor-compact.png'});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await page.getByRole('button',{name:'RU',exact:true}).click();await page.getByLabel('Fog color',{exact:true}).waitFor();
+  await appCommand(page,'RU');await page.getByLabel('Fog color',{exact:true}).waitFor();
   const folder=path.join(data,'Project');await mkdir(folder);await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);
-  await page.getByRole('button',{name:'Save',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
-  await page.getByRole('button',{name:'Open',exact:true}).click();await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
+  await appCommand(page,'Save');await page.waitForFunction(async()=>!(await window.studio.snapshot()).dirty);
+  await appCommand(page,'Open');await page.waitForFunction(async()=>!(await window.studio.snapshot()).selected);
   assert.deepEqual((await page.evaluate(()=>window.studio.snapshot())).project,state.project);
   // Test actual backend lifetime and rendering in Chromium, independently of React panel lifecycle.
   const rendering=await page.evaluate((await readFile('artifacts/fog-render-harness.js','utf8'))+';fogHarness.run()');assert.equal(rendering.disposed,2);assert.ok(rendering.frameMilliseconds>=0);

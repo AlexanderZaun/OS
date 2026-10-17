@@ -7,6 +7,20 @@
 .topbar i { display: inline-block; width: 9px; height: 9px; margin-right: 10px; background: var(--studio-accent); border-radius: 50%; }
 .project-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--studio-muted); }
 .project-title small { margin-left: 12px; font-size: 11px; color: var(--studio-subtle); }
+.menu-bar { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 1px; padding: 3px 10px; background: var(--studio-surface); border-bottom: 1px solid var(--studio-border); }
+.menu-bar > button { min-height: 29px; padding: 4px 10px; background: transparent; border-color: transparent; font-size: 12px; }
+.menu-bar > button:hover, .menu-bar > button[aria-expanded='true'] { background: var(--studio-hover); border-color: var(--studio-border); }
+.menu-popup { position: fixed; z-index: 1900; width: max-content; min-width: 285px; max-width: min(440px,calc(100vw - 16px)); overflow-y: auto; padding: 5px; color: var(--studio-text); background: var(--studio-surface); border: 1px solid var(--studio-border); border-radius: var(--studio-radius); box-shadow: var(--studio-shadow); }
+.menu-popup button { width: 100%; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; text-align: left; padding: 7px 8px; font-size: 12px; }
+.menu-popup button:hover:not(:disabled), .menu-popup button:focus-visible { background: var(--studio-hover); outline: none; }
+.menu-popup button > span:nth-child(2) { flex: 1; overflow-wrap: anywhere; }
+.menu-check { width: 13px; flex-shrink: 0; color: var(--studio-accent); }
+.menu-popup kbd { font: inherit; font-size: 10px; color: var(--studio-muted); white-space: nowrap; padding-left: 14px; }
+.menu-group { color: var(--studio-subtle); font-size: 10px; padding: 9px 10px 4px; border-top: 1px solid var(--studio-border); margin-top: 4px; }
+.menu-popup > div:first-child .menu-group { border-top: 0; margin-top: 0; padding-top: 4px; }
+.project-info { display: grid; grid-template-columns: minmax(100px,1fr) minmax(0,2fr); gap: 10px 20px; line-height: 1.5; }
+.project-info dt { color: var(--studio-muted); }
+.project-info dd { margin: 0; overflow-wrap: anywhere; }
 .toolbar { min-height: 48px; display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid var(--studio-border); overflow-x: auto; white-space: nowrap; }
 .toolbar button { font-size: 12px; }
 .toolbar-spacer { flex: 1; }

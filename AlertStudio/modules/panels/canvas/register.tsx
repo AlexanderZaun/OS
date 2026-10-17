@@ -24,6 +24,19 @@ export function CanvasPanel(props:PanelProps) {
   const [zoomText,setZoomText]=useState(percent(scale));
   useEffect(()=>setZoomText(percent(scale)),[scale]);
   function applyZoom(){if(zoomText===percent(scale))return;const value=parseZoomPercent(zoomText);if(value!==null&&value!==scale)viewport.zoom(value);setZoomText(percent(value??scale));}
+  const menuAction=useRef((action:import('../../../sdk/ui').CanvasAction)=>{});
+  menuAction.current=action=>{
+    if(viewport.navigationLocked.current)return;
+    if(action==='fit')viewport.fit();
+    if(action==='selected'&&editing.selection&&!editing.moving)viewport.frame(editing.selection);
+    if(action==='center')viewport.center();
+    if(action==='actual')viewport.zoom(1);
+    if(action==='zoomIn')viewport.zoom(scale*1.25);
+    if(action==='zoomOut')viewport.zoom(scale/1.25);
+    if(action==='hand')viewport.toggleHand();
+    viewport.stage.current?.focus({preventScroll:true});
+  };
+  useEffect(()=>props.registerCanvasActions?.(action=>menuAction.current(action)),[props.registerCanvasActions]);
   useEffect(()=>{setTime(Number(playbackTime(playback.state,Date.now()).toFixed(2)));},[playback.state.revision]);
   useEffect(()=>{
     const backend=new CanvasBackend(canvas.current!,latest.current.canvasRenderers);let raf=0;

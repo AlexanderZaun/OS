@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
@@ -12,12 +13,12 @@ async function closeWith(app,page,label){const closed=app.waitForEvent('close',{
 async function selectFolder(app,folder){await app.evaluate(({dialog},folder)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[folder]});},folder);}
 async function cleanClose(app){const closed=app.waitForEvent('close',{timeout:15000});await request(app).catch(()=>{});await closed;running.delete(app);}
 try{
-  let {app,page}=await launch('saved');await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Текст +',exact:true}).click();await page.getByLabel('Текст',{exact:true}).fill('Saved on close');
+  let {app,page}=await launch('saved');await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Текст +',exact:true}).click();await page.getByLabel('Текст',{exact:true}).fill('Saved on close');
   const initial=await page.evaluate(()=>window.studio.snapshot());
   const childPromise=app.waitForEvent('window');await page.getByRole('button',{name:'Свойства ↗',exact:true}).click();let child=await childPromise;await child.getByLabel('Текст',{exact:true}).waitFor();
   await child.close();assert.equal(app.windows().length,1);await expect(page.getByRole('dialog')).toHaveCount(0);
   await app.evaluate(({dialog})=>{dialog.showOpenDialog=()=>new Promise(resolve=>{globalThis.resolveCloseFolder=resolve;});});
-  await page.getByRole('button',{name:'Сохранить',exact:true}).click();await expect.poll(()=>app.evaluate(()=>typeof globalThis.resolveCloseFolder)).toBe('function');
+  await appCommand(page,'Сохранить');await expect.poll(()=>app.evaluate(()=>typeof globalThis.resolveCloseFolder)).toBe('function');
   await request(app);assert.equal(await page.evaluate(()=>window.studio.closeState()),null);await expect(page.getByRole('dialog')).toHaveCount(0);
   await app.evaluate(()=>globalThis.resolveCloseFolder({canceled:true,filePaths:[]}));
   let dialog=page.getByRole('dialog',{name:'Закрыть AlertStudio?',exact:true});await expect(dialog).toBeVisible();await expect(dialog.getByRole('button',{name:'Отмена',exact:true})).toBeFocused();
@@ -30,7 +31,7 @@ try{
   await request(app);assert.equal((await page.evaluate(()=>window.studio.closeState())).id,state.id);await expect(page.getByRole('dialog')).toHaveCount(1);
   await resizeWindow(app,page,1920,1080);await page.screenshot({path:'artifacts/screenshots/close-1080.png'});await resizeWindow(app,page,900,650);await page.screenshot({path:'artifacts/screenshots/close-compact.png'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.keyboard.press('Escape');await expect(dialog).toHaveCount(0);await expect(child.getByLabel('Текст',{exact:true})).toBeEnabled();
-  await page.getByRole('button',{name:'RU',exact:true}).click();await request(app);dialog=page.getByRole('dialog',{name:'Close AlertStudio?',exact:true});await expect(dialog.getByRole('button',{name:'Save and close',exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Cancel',exact:true}).click();await page.getByRole('button',{name:'EN',exact:true}).click();
+  await appCommand(page,'RU');await request(app);dialog=page.getByRole('dialog',{name:'Close AlertStudio?',exact:true});await expect(dialog.getByRole('button',{name:'Save and close',exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Cancel',exact:true}).click();await appCommand(page,'EN');
   await app.evaluate(({dialog})=>{dialog.showOpenDialog=()=>new Promise(resolve=>{globalThis.resolveCloseFolder=resolve;});});
   await request(app);dialog=page.getByRole('dialog',{name:'Закрыть AlertStudio?',exact:true});await dialog.getByRole('button',{name:'Сохранить и закрыть',exact:true}).click();await expect(dialog).toContainText('Сохранение проекта…');await expect(dialog.getByRole('button',{name:'Отмена',exact:true})).toBeDisabled();
   await page.keyboard.press('Escape');await page.keyboard.press('Tab');await expect(dialog).toBeFocused();await expect(dialog).toBeVisible();
@@ -38,12 +39,12 @@ try{
   await selectFolder(app,path.join(root,'Missing'));await dialog.getByRole('button',{name:'Сохранить и закрыть',exact:true}).click();await expect(dialog).toContainText('Не удалось сохранить проект');assert.equal((await page.evaluate(()=>window.studio.snapshot())).dirty,true);assert.equal(app.windows().length,2);
   await selectFolder(app,folder);await closeWith(app,page,'Сохранить и закрыть');
   const index=JSON.parse(await readFile(path.join(folder,'project.json'),'utf8'));const content=JSON.parse(await readFile(path.join(folder,'revisions',index.revision,'scenes/main/objects',initial.selected,'settings/content.json'),'utf8'));assert.equal(content.value,'Saved on close');
-  ({app,page}=await launch('saved'));assert.deepEqual(await page.evaluate(()=>window.studio.recoveries()),[]);await selectFolder(app,folder);await page.getByRole('button',{name:'Открыть',exact:true}).click();await page.locator('.layer-row button').first().click();await expect(page.getByLabel('Текст',{exact:true})).toHaveValue('Saved on close');
+  ({app,page}=await launch('saved'));assert.deepEqual(await page.evaluate(()=>window.studio.recoveries()),[]);await selectFolder(app,folder);await appCommand(page,'Открыть');await page.locator('.layer-row button').first().click();await expect(page.getByLabel('Текст',{exact:true})).toHaveValue('Saved on close');
   const savedIndex=await readFile(path.join(folder,'project.json'),'utf8');await page.getByLabel('Текст',{exact:true}).fill('Discard on close');await expect(page.getByTestId('autosave-status')).toHaveAttribute('data-state','saved');
   await request(app);await closeWith(app,page,'Закрыть без сохранения');assert.equal(await readFile(path.join(folder,'project.json'),'utf8'),savedIndex);
   const metadata=JSON.parse(await readFile(path.join(root,'saved/Recovery',initial.project.id,'recovery.json'),'utf8'));assert.equal(metadata.active,false);
-  ({app,page}=await launch('saved'));assert.deepEqual(await page.evaluate(()=>window.studio.recoveries()),[]);await selectFolder(app,folder);await page.getByRole('button',{name:'Открыть',exact:true}).click();await page.locator('.layer-row button').first().click();await expect(page.getByLabel('Текст',{exact:true})).toHaveValue('Saved on close');await cleanClose(app);
-  ({app,page}=await launch('unsaved'));await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Текст +',exact:true}).click();await expect(page.getByTestId('autosave-status')).toHaveAttribute('data-state','saved');
+  ({app,page}=await launch('saved'));assert.deepEqual(await page.evaluate(()=>window.studio.recoveries()),[]);await selectFolder(app,folder);await appCommand(page,'Открыть');await page.locator('.layer-row button').first().click();await expect(page.getByLabel('Текст',{exact:true})).toHaveValue('Saved on close');await cleanClose(app);
+  ({app,page}=await launch('unsaved'));await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Текст +',exact:true}).click();await expect(page.getByTestId('autosave-status')).toHaveAttribute('data-state','saved');
   await request(app,true);await expect(page.getByRole('dialog',{name:'Закрыть AlertStudio?',exact:true})).toBeVisible();await closeWith(app,page,'Закрыть без сохранения');
   ({app,page}=await launch('unsaved'));assert.deepEqual(await page.evaluate(()=>window.studio.recoveries()),[]);await cleanClose(app);
   assert.deepEqual(errors,[]);await writeFile('artifacts/close-ui-results.json',JSON.stringify({date:new Date().toISOString(),checks:['main close exits all windows; detached close affects only panel','Cancel default and Enter/Escape','RU/EN shared themed dialog','single prompt; owner and mutation IPC guards','folder cancellation and save failure keep document open','saving disables cancellation and traps focus','Save and close writes latest values','Discard preserves saved revision and dismisses current recovery','unsaved discard and app.quit route','clean close without confirmation','900x650 and 1920x1080'],errors},null,2));console.log('Close workflow Electron smoke passed');

@@ -1,3 +1,4 @@
+import {appCommand,ensurePanelManager} from './menu-helpers.mjs';
 import {_electron as electron,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -10,7 +11,7 @@ let app;const errors=[];
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await isolateDesktopPointer(app,page);
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Туман +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await ensurePanelManager(page);await page.getByRole('button',{name:'Туман +',exact:true}).click();
   for(const [label,value] of [['Центр X','480'],['Центр Y','680'],['Ширина тумана','400'],['Высота тумана','200'],['Поворот','35']])await page.getByLabel(label,{exact:true}).fill(value);
   await expect(page.getByLabel('Поворот',{exact:true})).toHaveValue('35');await resizeWindow(app,page,1920,1080);
   const viewport=page.getByRole('region',{name:'Область холста',exact:true}),canvas=viewport.locator('canvas'),zoom=page.getByRole('combobox',{name:'Масштаб холста',exact:true}),entry=page.getByLabel('Масштаб в процентах',{exact:true});
@@ -39,6 +40,6 @@ try{
   c=await rect();await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x-35,y-20,{steps:4});await page.keyboard.press('Escape');await page.mouse.up();await expect.poll(async()=>Math.abs((await rect()).x-c.x)).toBeLessThan(1);assert.ok(Math.abs((await rect()).y-c.y)<1);await viewport.press('h');await expect(viewport).toHaveAttribute('data-navigation','idle');
   await cdp.detach();assert.deepEqual(await state(),before);
   await resizeWindow(app,page,900,650);await page.getByRole('button',{name:'Вписать выбранное',exact:true}).click();await assertSelectedFits();await page.screenshot({path:'artifacts/screenshots/canvas-selected-compact.png'});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-  await page.getByRole('button',{name:'RU',exact:true}).click();await expect(page.getByLabel('Zoom percentage',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Fit selected',exact:true})).toBeVisible();
+  await appCommand(page,'RU');await expect(page.getByLabel('Zoom percentage',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Fit selected',exact:true})).toBeVisible();
   assert.deepEqual(errors,[]);await writeFile('artifacts/canvas-precision-ui-results.json',JSON.stringify({date:new Date().toISOString(),checks:['decimal comma/custom percent/invalid/limits/Escape','rotated off-center selection framing/button/F','arrow/shift arrow/centering','shift wheel horizontal pan','native two-touch zoom + moving centroid + one-touch continuation','hand tool mouse pan/H/Escape','unchanged project/history','RU/EN','900x650 and 1920x1080'],touchBaseline:baseline,errors},null,2));console.log('Canvas precision Electron smoke passed');
 }catch(error){if(app)console.error(await app.firstWindow().then(p=>p.evaluate(()=>window.touchLog)));throw error;}finally{if(app){for(const [i,p] of app.windows().entries())await p.screenshot({path:`artifacts/screenshots/canvas-precision-last-${i}.png`}).catch(()=>{});await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}}
