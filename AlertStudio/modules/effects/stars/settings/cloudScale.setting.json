@@ -1,0 +1,25 @@
+{
+  "id": "cloudScale",
+  "type": "number",
+  "default": 100,
+  "min": 25,
+  "max": 200,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Масштаб относительно облака",
+    "en": "Cloud relative scale"
+  },
+  "group": {
+    "id": "link",
+    "label": {
+      "ru": "Связь с облаком",
+      "en": "Cloud attachment"
+    }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "cloud"
+  }
+}

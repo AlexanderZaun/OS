@@ -1,0 +1,34 @@
+{
+  "id": "cloudMask",
+  "type": "select",
+  "default": "none",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Маска линий",
+    "en": "Line mask"
+  },
+  "group": {
+    "id": "mask",
+    "label": {
+      "ru": "Линии в тумане",
+      "en": "Lines in fog"
+    }
+  },
+  "options": [
+    {
+      "value": "none",
+      "label": {
+        "ru": "Без маски",
+        "en": "No mask"
+      }
+    },
+    {
+      "value": "density",
+      "label": {
+        "ru": "По плотности тумана",
+        "en": "By fog density"
+      }
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": "regionMode",
+  "type": "select",
+  "default": "independent",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Режим области",
+    "en": "Region mode"
+  },
+  "group": {
+    "id": "region",
+    "label": {
+      "ru": "Общая область",
+      "en": "Shared region"
+    }
+  },
+  "options": [
+    {
+      "value": "independent",
+      "label": {
+        "ru": "Самостоятельная область",
+        "en": "Independent region"
+      }
+    },
+    {
+      "value": "source",
+      "label": {
+        "ru": "По другому туману",
+        "en": "From another fog"
+      }
+    }
+  ]
+}

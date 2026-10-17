@@ -1,0 +1,55 @@
+{
+  "id": "starShape",
+  "type": "select",
+  "default": "legacy",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Форма звезды",
+    "en": "Star shape"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Ядро и ореол",
+      "en": "Core and halo"
+    }
+  },
+  "options": [
+    {
+      "value": "legacy",
+      "label": {
+        "ru": "Смешанные точки и лучи",
+        "en": "Mixed dots and rays"
+      }
+    },
+    {
+      "value": "square",
+      "label": {
+        "ru": "Квадрат",
+        "en": "Square"
+      }
+    },
+    {
+      "value": "circle",
+      "label": {
+        "ru": "Круг",
+        "en": "Circle"
+      }
+    },
+    {
+      "value": "diamond",
+      "label": {
+        "ru": "Ромб",
+        "en": "Diamond"
+      }
+    },
+    {
+      "value": "spark",
+      "label": {
+        "ru": "Лучистая",
+        "en": "Spark"
+      }
+    }
+  ]
+}

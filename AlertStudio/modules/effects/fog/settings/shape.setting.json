@@ -29,6 +29,17 @@
         "ru": "Скруглённая область",
         "en": "Rounded region"
       }
+    },
+    {
+      "value": "cloud",
+      "label": {
+        "ru": "Неровное облако",
+        "en": "Cloud"
+      }
     }
-  ]
+  ],
+  "when": {
+    "key": "regionMode",
+    "equals": "independent"
+  }
 }

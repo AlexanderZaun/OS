@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Desktop } from '../../contracts/desktop';
 const bridge:Desktop={
+  closeState:()=>ipcRenderer.invoke('app:close-state'),respondClose:(id,choice)=>ipcRenderer.invoke('app:close-response',id,choice),
+  subscribeClose:listener=>{const handler=(_e:unknown,state:Parameters<typeof listener>[0])=>listener(state);ipcRenderer.on('app:close-changed',handler);return()=>ipcRenderer.removeListener('app:close-changed',handler);},
+  createPreset:(id,language)=>ipcRenderer.invoke('project:preset',id,language),
+  playback:()=>ipcRenderer.invoke('playback:snapshot'),playbackCommand:c=>ipcRenderer.invoke('playback:command',c),
+  subscribePlayback:listener=>{const handler=(_e:unknown,state:Parameters<typeof listener>[0])=>listener(state);ipcRenderer.on('playback:changed',handler);return()=>ipcRenderer.removeListener('playback:changed',handler);},
   snapshot:()=>ipcRenderer.invoke('project:snapshot'),command:c=>ipcRenderer.invoke('project:command',c),
   subscribe:listener=>{const handler=(_e:unknown,s:Parameters<typeof listener>[0])=>listener(s);ipcRenderer.on('project:changed',handler);return()=>ipcRenderer.removeListener('project:changed',handler);},
   extensions:()=>ipcRenderer.invoke('extensions:list'),install:()=>ipcRenderer.invoke('extensions:install'),extensionFolder:()=>ipcRenderer.invoke('extensions:folder'),

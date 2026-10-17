@@ -17,5 +17,9 @@
       "ru": "Звёзды",
       "en": "Stars"
     }
+  },
+  "when": {
+    "key": "starShape",
+    "equals": "legacy"
   }
 }

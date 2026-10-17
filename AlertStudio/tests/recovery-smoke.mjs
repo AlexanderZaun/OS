@@ -115,18 +115,16 @@ try {
   await primary.page.getByLabel('Текст',{exact:true}).fill('Черновик при обычном выходе');
   await expect.poll(async()=>primary.page.evaluate(async()=>(await window.studio.snapshot()).project.objects[0].settings.content)).toBe('Черновик при обычном выходе');
   const closed = primary.app.waitForEvent('close',{timeout:15000});
-  await primary.app.evaluate(({BrowserWindow,dialog})=>{
-    dialog.showMessageBoxSync=()=>1;
-    BrowserWindow.getAllWindows()[0].close();
-  }).catch(()=>{});
+  const mainWindow=await primary.app.browserWindow(primary.page);await mainWindow.evaluate(w=>w.close());
+  await primary.page.getByRole('dialog',{name:'Закрыть AlertStudio?',exact:true}).getByRole('button',{name:'Сохранить и закрыть',exact:true}).click();
   await closed;
   running.delete(primary.app);
   primary = await launch('primary');
-  await primary.page.getByRole('button',{name:/Черновики восстановления/}).click();
-  await primary.page.getByRole('dialog').getByRole('button',{name:'Восстановить черновик'}).click();
+  assert.deepEqual(await primary.page.evaluate(()=>window.studio.recoveries()),[]);
+  await selectFolder(primary.app,projectFolder);await primary.page.getByRole('button',{name:'Открыть',exact:true}).click();
   await expect.poll(async()=>primary.page.evaluate(async()=>(await window.studio.snapshot()).project.objects[0]?.settings.content)).toBe('Черновик при обычном выходе');
   assert.deepEqual(errors,[]);
-  await writeFile('artifacts/recovery-ui-results.json',JSON.stringify({date:new Date().toISOString(),platform:process.platform,root,tests:['debounced draft leaves explicit project unchanged','playback leaves revision unchanged','second process rejected','crash recovery from UI','restore is unsaved copy','Save clears recovery candidate','damaged index opens previous version with notice','compact dialog Escape and viewport','1920x1080 viewport','normal close flushes latest draft before quit'],errors},null,2));
+  await writeFile('artifacts/recovery-ui-results.json',JSON.stringify({date:new Date().toISOString(),platform:process.platform,root,tests:['debounced draft leaves explicit project unchanged','playback leaves revision unchanged','second process rejected','crash recovery from UI','restore is unsaved copy','Save clears recovery candidate','damaged index opens previous version with notice','compact dialog Escape and viewport','1920x1080 viewport','Save and close persists latest edit and dismisses recovery candidate'],errors},null,2));
   console.log('Recovery + theme Electron smoke passed.');
 } finally {
   for(const app of running) {

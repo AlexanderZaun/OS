@@ -1,0 +1,41 @@
+{
+  "id": "distribution",
+  "type": "select",
+  "default": "area",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Распределение клубов",
+    "en": "Billow distribution"
+  },
+  "group": {
+    "id": "cloud",
+    "label": {
+      "ru": "Структура облака",
+      "en": "Cloud structure"
+    }
+  },
+  "options": [
+    {
+      "value": "area",
+      "label": {
+        "ru": "По области",
+        "en": "Area"
+      }
+    },
+    {
+      "value": "rim",
+      "label": {
+        "ru": "По краю",
+        "en": "Rim"
+      }
+    },
+    {
+      "value": "mixed",
+      "label": {
+        "ru": "Смешанное",
+        "en": "Mixed"
+      }
+    }
+  ]
+}

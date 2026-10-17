@@ -17,5 +17,9 @@
       "ru": "Мерцание и движение",
       "en": "Twinkle and motion"
     }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "field"
   }
 }

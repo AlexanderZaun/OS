@@ -17,5 +17,9 @@
       "ru": "Область",
       "en": "Region"
     }
+  },
+  "when": {
+    "key": "regionMode",
+    "equals": "independent"
   }
 }

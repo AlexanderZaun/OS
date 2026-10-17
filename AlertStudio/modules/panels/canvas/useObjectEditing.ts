@@ -4,6 +4,7 @@ import type {PanelProps} from '../../../sdk/ui';
 import type {ObjectBounds,Effect} from '../../../sdk';
 import type {SceneObject,Value} from '../../../contracts/project';
 import type {useViewport} from './useViewport';
+import {createSceneEvaluation} from '../../../core/scene/evaluate';
 
 type Preview={id:string;values:Record<string,Value>};
 type Gesture={pointerId:number;revision:number;projectId:string;object:SceneObject|null;effect:Effect|null;startX:number;startY:number;scale:number;left:number;top:number;values:Record<string,Value>};
@@ -14,7 +15,8 @@ export function useObjectEditing(props:PanelProps,canvas:RefObject<HTMLCanvasEle
   function measureText(text:string,font:string){const c=canvas.current!.getContext('2d')!;c.save();c.font=font;const width=c.measureText(text).width;c.restore();return width;}
   function bounds(object:SceneObject,effect:Effect|undefined):ObjectBounds|null{
     if(!object.visible||!effect?.editor)return null;
-    const result=effect.editor.bounds(object.settings,measureText);
+    const context=createSceneEvaluation(latest.current.snapshot.project,latest.current.effects,0).contextFor(object.id);
+    const result=effect.editor.bounds(object.settings,measureText,context);
     if(![result.x,result.y,result.width,result.height,result.rotation??0].every(Number.isFinite)||result.width<=0||result.height<=0)return null;
     return result;
   }
@@ -53,7 +55,8 @@ export function useObjectEditing(props:PanelProps,canvas:RefObject<HTMLCanvasEle
     if(Math.hypot(event.clientX-start.startX,event.clientY-start.startY)<3)return;
     const values:Record<string,Value>={};
     for(const [axis,delta] of [['x',dx],['y',dy]] as const){
-      const key=start.effect.editor.position[axis],setting=start.effect.settings.find(s=>s.id===key);
+      const position:{x:string;y:string}=typeof start.effect.editor.position==='function'?start.effect.editor.position(start.object.settings):start.effect.editor.position;
+      const key=position[axis],setting=start.effect.settings.find(s=>s.id===key);
       if(!setting||setting.type!=='number')continue;
       const step=setting.step??1,origin=setting.min??0;
       const value=origin+Math.round((Number(start.object.settings[key])+delta-origin)/step)*step;
@@ -63,6 +66,9 @@ export function useObjectEditing(props:PanelProps,canvas:RefObject<HTMLCanvasEle
   }
   function onPointerUp(event:PointerEvent<HTMLDivElement>){
     const start=gesture.current;if(!start||start.pointerId!==event.pointerId)return;
+    // The release can arrive after the browser coalesces the last move samples.
+    // Commit the release position rather than a possibly older preview position.
+    onPointerMove(event);
     if(isCurrent(start)){
       const moved=start.object&&Object.keys(start.values).some(key=>start.values[key]!==start.object!.settings[key]);
       if(moved)latest.current.dispatch({type:'patch',id:start.object!.id,values:start.values,revision:start.revision});

@@ -1,0 +1,21 @@
+{
+  "id": "neighbors",
+  "type": "number",
+  "default": 2,
+  "min": 1,
+  "max": 4,
+  "step": 1,
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Соседей на звезду",
+    "en": "Neighbors per star"
+  },
+  "group": {
+    "id": "network",
+    "label": {
+      "ru": "Сеть",
+      "en": "Network"
+    }
+  }
+}

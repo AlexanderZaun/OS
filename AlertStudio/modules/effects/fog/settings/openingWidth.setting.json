@@ -1,0 +1,21 @@
+{
+  "id": "openingWidth",
+  "type": "number",
+  "default": 100,
+  "min": 20,
+  "max": 200,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Ширина просвета",
+    "en": "Opening width"
+  },
+  "group": {
+    "id": "cloud",
+    "label": {
+      "ru": "Структура облака",
+      "en": "Cloud structure"
+    }
+  }
+}

@@ -5,6 +5,9 @@ export type Command =
   | { type: 'add'; effect: string }
   | { type: 'set'; id: string; key: string; value: Value }
   | { type: 'patch'; id: string; values: Record<string,Value>; revision:number }
+  | { type: 'reorder'; id:string; direction:'up'|'down' }
+  | { type: 'rename'; id:string; name:string }
+  | { type: 'move'; id:string; targetId:string; placement:'above'|'below'; revision:number }
   | { type: 'select'; id: string | null }
   | { type: 'remove' | 'duplicate' | 'visibility'; id: string }
   | { type: 'undo' } | { type: 'redo' };

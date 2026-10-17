@@ -1,0 +1,18 @@
+{
+  "id": "outlineColor",
+  "type": "color",
+  "default": "#071223",
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Цвет подложки",
+    "en": "Outline color"
+  },
+  "group": {
+    "id": "lines",
+    "label": {
+      "ru": "Линии",
+      "en": "Lines"
+    }
+  }
+}

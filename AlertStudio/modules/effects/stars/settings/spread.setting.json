@@ -1,0 +1,25 @@
+{
+  "id": "spread",
+  "type": "number",
+  "default": 100,
+  "min": 50,
+  "max": 160,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Разброс за границу",
+    "en": "Boundary spread"
+  },
+  "group": {
+    "id": "link",
+    "label": {
+      "ru": "Связь с облаком",
+      "en": "Cloud attachment"
+    }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "cloud"
+  }
+}

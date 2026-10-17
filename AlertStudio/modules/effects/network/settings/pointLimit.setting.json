@@ -1,0 +1,21 @@
+{
+  "id": "pointLimit",
+  "type": "number",
+  "default": 500,
+  "min": 10,
+  "max": 1000,
+  "step": 1,
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Предел звёзд сети",
+    "en": "Network star limit"
+  },
+  "group": {
+    "id": "network",
+    "label": {
+      "ru": "Сеть",
+      "en": "Network"
+    }
+  }
+}

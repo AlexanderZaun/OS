@@ -1,0 +1,41 @@
+{
+  "id": "quality",
+  "type": "select",
+  "default": "normal",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Качество тумана",
+    "en": "Fog quality"
+  },
+  "group": {
+    "id": "cloud",
+    "label": {
+      "ru": "Структура облака",
+      "en": "Cloud structure"
+    }
+  },
+  "options": [
+    {
+      "value": "draft",
+      "label": {
+        "ru": "Черновое",
+        "en": "Draft"
+      }
+    },
+    {
+      "value": "normal",
+      "label": {
+        "ru": "Обычное",
+        "en": "Normal"
+      }
+    },
+    {
+      "value": "high",
+      "label": {
+        "ru": "Высокое",
+        "en": "High"
+      }
+    }
+  ]
+}

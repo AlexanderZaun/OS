@@ -1,0 +1,21 @@
+{
+  "id": "glintIntensity",
+  "type": "number",
+  "default": 0,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Яркость бликов",
+    "en": "Glint intensity"
+  },
+  "group": {
+    "id": "glints",
+    "label": {
+      "ru": "Блики",
+      "en": "Glints"
+    }
+  }
+}

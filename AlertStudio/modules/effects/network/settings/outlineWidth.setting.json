@@ -1,0 +1,21 @@
+{
+  "id": "outlineWidth",
+  "type": "number",
+  "default": 0,
+  "min": 0,
+  "max": 10,
+  "step": 0.1,
+  "unit": "px",
+  "animatable": true,
+  "label": {
+    "ru": "Толщина подложки",
+    "en": "Outline width"
+  },
+  "group": {
+    "id": "lines",
+    "label": {
+      "ru": "Линии",
+      "en": "Lines"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "mode",
+  "type": "select",
+  "default": "triangles",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Режим соединений",
+    "en": "Connection mode"
+  },
+  "group": {
+    "id": "network",
+    "label": {
+      "ru": "Сеть",
+      "en": "Network"
+    }
+  },
+  "options": [
+    {
+      "value": "segments",
+      "label": {
+        "ru": "Соединения",
+        "en": "Segments"
+      }
+    },
+    {
+      "value": "triangles",
+      "label": {
+        "ru": "Треугольники",
+        "en": "Triangles"
+      }
+    },
+    {
+      "value": "chains",
+      "label": {
+        "ru": "Цепочки",
+        "en": "Chains"
+      }
+    }
+  ]
+}

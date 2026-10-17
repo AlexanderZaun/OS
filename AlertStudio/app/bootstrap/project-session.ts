@@ -104,8 +104,8 @@ export class ProjectSession {
 
   private async adopt(lease: FolderLease | null) {
     const previous = this.lease;
-    this.lease = lease;
     if (previous && previous !== lease) await previous.release();
+    this.lease = lease;
   }
 
   private loaded(project: Project, folder: string | null, usedBackup = false, recovered = false) {
@@ -173,8 +173,14 @@ export class ProjectSession {
     });
   }
 
-  async dispose() {
-    this.cancelTimer();
-    try { await this.flushDraft(); } finally { await this.adopt(null); }
+  async dispose(discard=false) {
+    return this.exclusive(async()=>{
+      this.cancelTimer();
+      try {
+        if(discard){await this.tail;await this.dismissIfPresent(this.projects.snapshot().project.id);}
+        else await this.flushDraft();
+        await this.adopt(null);
+      }catch(error){this.scheduleDraft();throw error;}
+    });
   }
 }

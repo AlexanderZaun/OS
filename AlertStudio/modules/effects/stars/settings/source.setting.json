@@ -1,0 +1,23 @@
+{
+  "id": "source",
+  "type": "source",
+  "sourceType": "fog",
+  "default": "",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Источник тумана",
+    "en": "Fog source"
+  },
+  "group": {
+    "id": "link",
+    "label": {
+      "ru": "Связь с облаком",
+      "en": "Cloud attachment"
+    }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "cloud"
+  }
+}

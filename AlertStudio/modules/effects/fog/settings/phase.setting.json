@@ -1,0 +1,21 @@
+{
+  "id": "phase",
+  "type": "number",
+  "default": 0,
+  "min": 0,
+  "max": 360,
+  "step": 1,
+  "unit": "°",
+  "animatable": true,
+  "label": {
+    "ru": "Фаза движения",
+    "en": "Motion phase"
+  },
+  "group": {
+    "id": "cloud",
+    "label": {
+      "ru": "Структура облака",
+      "en": "Cloud structure"
+    }
+  }
+}

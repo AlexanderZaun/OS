@@ -2,6 +2,16 @@ import type { Language } from '../sdk/ui';
 const en={new:'New project',open:'Open',save:'Save',saveAs:'Save as',undo:'Undo',redo:'Redo',extensions:'Extensions',install:'Install package folder',folder:'Open extensions folder',restart:'Installed. Restart the app to activate.',close:'Close',add:'Add object',duplicate:'Duplicate',remove:'Remove',visibility:'Visible',base:'Base settings',scene:'Scene',empty:'Select an object to edit its settings.',missing:'Required effect is unavailable. Data is preserved.',detach:'Open in separate window',reset:'Reset workspace',play:'Play',pause:'Pause',fit:'Fit',welcome:'Create your next moment.',intro:'An offline workspace for stream graphics',create:'Create project',name:'Project name',width:'Width',height:'Height',background:'Background',transparent:'Transparent',trusted:'Install trusted ready packages only. Extensions run code in the editor. Activation requires restart.',safe:'Safe launch: pnpm start -- --safe',panel:'Open panel',dirty:'Unsaved',clean:'Saved',check:'Experimental SDK 0.1 · Canvas 2D',return:'Close this window to return to the main workspace.'};
 const ru:typeof en={new:'Новый проект',open:'Открыть',save:'Сохранить',saveAs:'Сохранить как',undo:'Отменить',redo:'Повторить',extensions:'Расширения',install:'Установить папку пакета',folder:'Папка расширений',restart:'Установлено. Перезапустите приложение для активации.',close:'Закрыть',add:'Добавить объект',duplicate:'Дублировать',remove:'Удалить',visibility:'Видимость',base:'Базовые настройки',scene:'Сцена',empty:'Выберите объект для изменения его настроек.',missing:'Нужный эффект недоступен. Данные сохранены.',detach:'Открыть в отдельном окне',reset:'Сбросить рабочую область',play:'Воспроизвести',pause:'Пауза',fit:'Вписать',welcome:'Создайте следующий яркий момент.',intro:'Офлайн-редактор графики для стримов',create:'Создать проект',name:'Название проекта',width:'Ширина',height:'Высота',background:'Фон',transparent:'Прозрачный',trusted:'Устанавливайте только доверенные готовые пакеты. Расширения исполняют код в редакторе. Активация после перезапуска.',safe:'Безопасный запуск: pnpm start -- --safe',panel:'Открыть панель',dirty:'Не сохранено',clean:'Сохранено',check:'Экспериментальный SDK 0.1 · Canvas 2D',return:'Закройте это окно для возврата в основную рабочую область.'};
 const sessionEn = {
+  zoomValue:'Zoom percentage',zoomValueHint:'1–800% · Enter to apply, Escape to cancel',frameSelection:'Fit selected',frameSelectionShort:'Selected',centerCanvas:'Center scene',centerCanvasShort:'Center',handTool:'Hand',handToolHint:'Hand tool (H): drag to pan',
+  layerSearch:'Find layers',layerType:'Layer type',allLayerTypes:'All types',noMatchingLayers:'No matching layers',clearLayerFilters:'Clear filters',renameLayer:'Rename layer',layerName:'Layer name',applyLayerName:'Apply name',layerTop:'Bring to top',layerBottom:'Send to bottom',dragLayer:'Drag layer',layerOrderHint:'Top rows appear in front. Drag the grip to reorder.',shownLayers:'Shown',selectedLayer:'Selected layer',
+  maskProblem:'Line masking needs a star field linked to fog',
+  closeTitle:'Close AlertStudio?',closeIntro:'Save your changes before closing?',closeSave:'Save and close',closeDiscard:'Close without saving',closeCancel:'Cancel',
+  closeDiscardHint:'Closing without saving keeps the saved project unchanged and dismisses this project’s recovery draft.',
+  closeUnsavedDiscardHint:'Closing without saving discards this unsaved project and dismisses its recovery draft.',
+  closeSaving:'Saving project…',closeFinishing:'Finishing safely…',closeElsewhere:'Closing is being confirmed in the main window.',
+  closeSaveCanceled:'Folder selection was canceled. The application is still open.',closeSaveFailed:'Could not save the project. Your changes remain open.',closeDiscardFailed:'Could not finish closing. The application is still open.',
+  cloudPreset:'Example scene',
+  period:'Period',
   recovery:'Recovery drafts', recoveryIntro:'Drafts are kept separately from your saved projects. Restore opens an unsaved copy.',
   restore:'Restore draft', dismiss:'Dismiss', noDrafts:'No recovery drafts available.',
   recoveredNotice:'A recovery draft is open. Save it to a project folder when ready.',
@@ -16,9 +26,20 @@ const sessionEn = {
   time:'Time (seconds)', emptyLayersTitle:'Your scene is empty', emptyLayersHint:'Add an object using the tools on the left.',
   check:'Local project · offline', resume:'Continue editing', savedFolder:'Project folder',
   zoom:'Canvas zoom',zoomIn:'Zoom in',zoomOut:'Zoom out',canvasViewport:'Canvas viewport',
-  canvasNavigation:'Drag: move object · Esc: cancel · Wheel: zoom · Space / middle mouse: pan · Home: fit · 1: 100%',
+  noSource:'Choose source',missingSource:'Source is missing',selectSource:'Select source',layerUp:'Layer up',layerDown:'Layer down',sourceProblem:'Check source links',cycleProblem:'Cyclic source links',effectProblem:'Effect unavailable or failed',limitProblem:'Network limit reached',loop:'Loop',duration:'Loop duration',playbackSpeed:'Playback speed',
+  canvasNavigation:'Wheel: zoom · Space / middle mouse / H: pan · Shift + wheel: horizontal pan · F: fit selected · Home: fit · 1: 100%',
 };
 const sessionRu:typeof sessionEn = {
+  zoomValue:'Масштаб в процентах',zoomValueHint:'1–800% · Enter — применить, Escape — отменить',frameSelection:'Вписать выбранное',frameSelectionShort:'Выбранное',centerCanvas:'Центрировать сцену',centerCanvasShort:'Центр',handTool:'Рука',handToolHint:'Инструмент «Рука» (H): перетаскивание холста',
+  layerSearch:'Найти слои',layerType:'Тип слоя',allLayerTypes:'Все типы',noMatchingLayers:'Подходящих слоёв нет',clearLayerFilters:'Сбросить фильтры',renameLayer:'Переименовать слой',layerName:'Название слоя',applyLayerName:'Применить название',layerTop:'На самый верх',layerBottom:'На самый низ',dragLayer:'Перетащить слой',layerOrderHint:'Верхние строки находятся на переднем плане. Меняйте порядок за ручку.',shownLayers:'Показано',selectedLayer:'Выбранный слой',
+  maskProblem:'Для маски линий нужно поле звёзд, связанное с туманом',
+  closeTitle:'Закрыть AlertStudio?',closeIntro:'Сохранить изменения перед закрытием?',closeSave:'Сохранить и закрыть',closeDiscard:'Закрыть без сохранения',closeCancel:'Отмена',
+  closeDiscardHint:'При закрытии без сохранения сохранённая версия проекта останется прежней, а его текущий черновик не будет предлагаться для восстановления.',
+  closeUnsavedDiscardHint:'При закрытии без сохранения этот проект не будет сохранён, а его черновик не будет предлагаться для восстановления.',
+  closeSaving:'Сохранение проекта…',closeFinishing:'Завершение работы…',closeElsewhere:'Закрытие подтверждается в главном окне.',
+  closeSaveCanceled:'Выбор папки отменён. Приложение остаётся открытым.',closeSaveFailed:'Не удалось сохранить проект. Ваши изменения остаются открытыми.',closeDiscardFailed:'Не удалось завершить закрытие. Приложение остаётся открытым.',
+  cloudPreset:'Сцена-пример',
+  period:'Период',
   recovery:'Черновики восстановления', recoveryIntro:'Черновики хранятся отдельно от сохранённых проектов. Восстановление открывает несохранённую копию.',
   restore:'Восстановить черновик', dismiss:'Скрыть', noDrafts:'Черновиков для восстановления нет.',
   recoveredNotice:'Открыт восстановленный черновик. Когда будете готовы, сохраните его в папку проекта.',
@@ -33,7 +54,8 @@ const sessionRu:typeof sessionEn = {
   time:'Время (секунды)', emptyLayersTitle:'Сцена пока пуста', emptyLayersHint:'Добавьте объект с помощью инструментов слева.',
   check:'Локальный проект · офлайн', resume:'Продолжить редактирование', savedFolder:'Папка проекта',
   zoom:'Масштаб холста',zoomIn:'Приблизить',zoomOut:'Отдалить',canvasViewport:'Область холста',
-  canvasNavigation:'Перетащить: объект · Esc: отмена · Колесо: масштаб · Пробел / средняя кнопка: холст · Home: вписать · 1: 100%',
+  noSource:'Выберите источник',missingSource:'Источник отсутствует',selectSource:'Выбрать источник',layerUp:'Слой выше',layerDown:'Слой ниже',sourceProblem:'Проверьте связи с источниками',cycleProblem:'Циклические связи источников',effectProblem:'Эффект недоступен или завершился с ошибкой',limitProblem:'Достигнут предел сети',loop:'Повтор',duration:'Длительность повтора',playbackSpeed:'Скорость воспроизведения',
+  canvasNavigation:'Колесо: масштаб · Пробел / средняя кнопка / H: холст · Shift + колесо: по горизонтали · F: вписать выбранное · Home: сцена · 1: 100%',
 };
 const dictionaries = {en:{...en,...sessionEn},ru:{...ru,...sessionRu}};
 export type TranslationKey = keyof typeof dictionaries.en;

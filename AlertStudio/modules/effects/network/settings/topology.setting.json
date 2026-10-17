@@ -1,0 +1,13 @@
+{
+  "id": "topology",
+  "type": "select",
+  "default": "dynamic",
+  "unit": "",
+  "animatable": false,
+  "label": {"ru": "Перестроение сети", "en": "Network topology"},
+  "group": {"id": "network", "label": {"ru": "Сеть", "en": "Network"}},
+  "options": [
+    {"value": "dynamic", "label": {"ru": "Ближайшие сейчас", "en": "Current nearest"}},
+    {"value": "stable", "label": {"ru": "Устойчивые связи", "en": "Stable connections"}}
+  ]
+}

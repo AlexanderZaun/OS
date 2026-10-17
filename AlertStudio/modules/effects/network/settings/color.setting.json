@@ -1,0 +1,18 @@
+{
+  "id": "color",
+  "type": "color",
+  "default": "#42dfff",
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Цвет линий",
+    "en": "Line color"
+  },
+  "group": {
+    "id": "network",
+    "label": {
+      "ru": "Сеть",
+      "en": "Network"
+    }
+  }
+}

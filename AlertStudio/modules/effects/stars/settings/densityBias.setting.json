@@ -1,0 +1,31 @@
+{
+  "id": "densityBias",
+  "type": "number",
+  "default": 60,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Сгущение в плотных клубах",
+    "en": "Concentration in dense billows"
+  },
+  "group": {
+    "id": "density",
+    "label": {
+      "ru": "Плотность тумана",
+      "en": "Fog density"
+    }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "cloud",
+    "and": [
+      {
+        "key": "cloudDistribution",
+        "equals": "density"
+      }
+    ]
+  }
+}

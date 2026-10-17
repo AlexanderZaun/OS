@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import path from 'node:path';
-import {resizeWindow,waitForCanvasFit,waitForCanvasScale,waitForCanvasLayout} from './window-helpers.mjs';
+import {resizeWindow,waitForCanvasFit,waitForCanvasScale,waitForCanvasLayout,isolateDesktopPointer} from './window-helpers.mjs';
 const data=path.resolve(`.test-data/editing-${randomUUID()}`);await mkdir(data,{recursive:true});await mkdir('artifacts/screenshots',{recursive:true});
 const env={...process.env,ALERT_STUDIO_DATA:data};delete env.ELECTRON_RUN_AS_NODE;
 const errors=[];let app;
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
+  await isolateDesktopPointer(app,page);
+  await page.evaluate(()=>{window.editEvents=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture','blur'])window.addEventListener(type,e=>{const c=document.querySelector('canvas')?.getBoundingClientRect();window.editEvents.push({type,x:e.clientX,y:e.clientY,id:e.pointerId,buttons:e.buttons,target:e.target?.className,mode:document.querySelector('.canvas-stage')?.dataset.navigation,canvas:c?{x:c.x,y:c.y,width:c.width,height:c.height}:null});},true);});
   await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Звёзды +',exact:true}).click();
   for(const [label,value] of [['Центр X','500'],['Центр Y','400'],['Ширина поля','400'],['Высота поля','300'],['Поворот поля','30']])await page.getByLabel(label,{exact:true}).fill(value);
   const state=()=>page.evaluate(()=>window.studio.snapshot());
@@ -24,7 +26,7 @@ try{
   await clickScene(500,400);await expect.poll(async()=>(await state()).selected).toBe(starId);
   await zoom.selectOption('0.5');await waitForCanvasScale(canvas,.5);
   let before=await state(),p=await point(500,400);
-  await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+90,p.y+45,{steps:8});
+  await page.mouse.move(p.x,p.y);await page.mouse.down();await expect(viewport).toHaveAttribute('data-navigation','moving');await page.mouse.move(p.x+90,p.y+45,{steps:8});
   assert.deepEqual(await state(),before); // Drag is preview-only until release.
   await page.mouse.up();await expect.poll(async()=>(await state()).project.objects[0].settings.x).toBe(680);
   let moved=await state();assert.equal(moved.project.objects[0].settings.y,490);assert.equal(moved.revision,before.revision+1);
@@ -42,7 +44,8 @@ try{
   await zoom.selectOption('2');await waitForCanvasScale(canvas,2);
   const childPromise=app.waitForEvent('window');await page.getByRole('button',{name:'Свойства ↗'}).click();const child=await childPromise;
   await child.getByLabel('Положение X',{exact:true}).waitFor();
-  p=await point(1000,600);before=await state();await page.mouse.move(p.x,p.y);await page.mouse.down();await page.mouse.move(p.x+20,p.y+30,{steps:5});await page.mouse.up();
+  const mainWindow=await app.browserWindow(page);await mainWindow.evaluate(w=>w.focus());
+  p=await point(1000,600);before=await state();await page.mouse.move(p.x,p.y);await page.mouse.down();await expect(viewport).toHaveAttribute('data-navigation','moving');await page.mouse.move(p.x+20,p.y+30,{steps:5});await page.mouse.up();
   await expect.poll(async()=>(await state()).project.objects[1].settings.x).toBe(1010);assert.equal((await state()).project.objects[1].settings.y,615);
   await expect(child.getByLabel('Положение X',{exact:true})).toHaveValue('1010');await child.close();
   await zoom.selectOption('fit');
@@ -51,4 +54,4 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
   await writeFile('artifacts/editing-ui-results.json',JSON.stringify({date:new Date().toISOString(),tests:['empty click deselect','rotated field hit testing','preview does not mutate project','drag at 50%','one undo/redo per gesture','Escape cancels','concurrent edit cancels','resize during drag cancels','text drag at 200%','detached properties sync','selection frame and compact UI'],errors},null,2));
   console.log('Canvas editing Electron smoke passed');
-}finally{if(app){await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}}
+}catch(error){if(app)console.error(await app.firstWindow().then(p=>p.evaluate(()=>window.editEvents.slice(-35))));throw error;}finally{if(app){for(const [i,page] of app.windows().entries())await page.screenshot({path:`artifacts/screenshots/editing-last-${i}.png`}).catch(()=>{});await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}}

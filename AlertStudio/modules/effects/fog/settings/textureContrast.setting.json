@@ -1,0 +1,21 @@
+{
+  "id": "textureContrast",
+  "type": "number",
+  "default": 100,
+  "min": 0,
+  "max": 300,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Контраст текстуры",
+    "en": "Texture contrast"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Вид",
+      "en": "Appearance"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "trails",
+  "type": "number",
+  "default": 0,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "ms",
+  "animatable": true,
+  "label": {
+    "ru": "Длина следа",
+    "en": "Trail length"
+  },
+  "group": {
+    "id": "look",
+    "label": {
+      "ru": "Ядро и ореол",
+      "en": "Core and halo"
+    }
+  }
+}

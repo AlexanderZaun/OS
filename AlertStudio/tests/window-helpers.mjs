@@ -1,6 +1,13 @@
+// CDP input still reaches Chromium; native desktop mouse motion must not cancel test pointer capture.
+export async function isolateDesktopPointer(app,page){
+  const window=await app.browserWindow(page);await window.evaluate(w=>w.setIgnoreMouseEvents(true));
+  const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setFocusEmulationEnabled',{enabled:true});
+}
+
 export async function resizeWindow(app,page,width,height){
-  const content=await app.evaluate(async({BrowserWindow},[width,height])=>{
-    const window=BrowserWindow.getAllWindows()[0],outer=window.getSize(),content=window.getContentSize();
+  const handle=await app.browserWindow(page);
+  const content=await handle.evaluate(async(window,[width,height])=>{
+    const outer=window.getSize(),content=window.getContentSize();
     const expected=[width-(outer[0]-content[0]),height-(outer[1]-content[1])];
     if(outer[0]!==width||outer[1]!==height)await new Promise(resolve=>{window.once('resize',resolve);window.setSize(width,height);});
     return expected;

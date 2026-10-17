@@ -1,0 +1,19 @@
+{
+  "id": "source",
+  "type": "source",
+  "sourceType": "stars",
+  "default": "",
+  "unit": "",
+  "animatable": false,
+  "label": {
+    "ru": "Источник звёзд",
+    "en": "Stars source"
+  },
+  "group": {
+    "id": "network",
+    "label": {
+      "ru": "Сеть",
+      "en": "Network"
+    }
+  }
+}

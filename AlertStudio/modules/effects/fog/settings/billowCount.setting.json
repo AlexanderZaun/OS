@@ -1,0 +1,21 @@
+{
+  "id": "billowCount",
+  "type": "number",
+  "default": 36,
+  "min": 8,
+  "max": 160,
+  "step": 1,
+  "unit": "",
+  "animatable": true,
+  "label": {
+    "ru": "Количество клубов",
+    "en": "Billow count"
+  },
+  "group": {
+    "id": "cloud",
+    "label": {
+      "ru": "Структура облака",
+      "en": "Cloud structure"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "densityFade",
+  "type": "number",
+  "default": 100,
+  "min": 0,
+  "max": 100,
+  "step": 1,
+  "unit": "%",
+  "animatable": true,
+  "label": {
+    "ru": "Затухание вне тумана",
+    "en": "Fade outside fog"
+  },
+  "group": {
+    "id": "density",
+    "label": {
+      "ru": "Плотность тумана",
+      "en": "Fog density"
+    }
+  },
+  "when": {
+    "key": "fieldMode",
+    "equals": "cloud",
+    "and": [
+      {
+        "key": "cloudDistribution",
+        "equals": "density"
+      }
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Snapshot, Command } from '../../contracts/project';
 import type { RecoveryInfo, SessionStatus } from '../../contracts/recovery';
+import type {WindowCloseState,CloseChoice} from '../../contracts/close';
 import type { Registry } from '../bootstrap/registry';
 import type { Language, PanelProps } from '../../sdk/ui';
 import { Workspace } from '../../adapters/workspace-dockview/Workspace';
@@ -21,7 +22,9 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
   const [modal, setModal] = useState<'extensions' | 'recovery' | null>(null);
   const [status, setStatus] = useState('');
   const [hasError, setHasError] = useState(false);
-  const [working, setWorking] = useState(false);
+  const [operationWorking, setWorking] = useState(false);
+  const [closeState,setCloseState]=useState<WindowCloseState>(null),[closeResponding,setCloseResponding]=useState(false);
+  const working=operationWorking||closeState!==null;
   const [transitioning, setTransitioning] = useState(false);
   const [workspace, setWorkspace] = useState(0);
   const [session, setSession] = useState(initialSession);
@@ -40,6 +43,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
   }
 
   async function run(action: () => Promise<unknown>) {
+    if(closeState)return;
     setWorking(true);
     setStatus('');
     setHasError(false);
@@ -66,10 +70,22 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
     void window.studio.recoveries().then(setRecoveries).catch(report);
     return () => { unsubscribe(); unsubscribeSession(); };
   }, []);
+  useEffect(()=>{
+    let active=true,received=false;
+    const accept=(state:WindowCloseState)=>{if(active){setCloseState(state);if(state)setModal(null);}};
+    const unsubscribe=window.studio.subscribeClose(state=>{received=true;accept(state);});
+    void window.studio.closeState().then(state=>{if(!received)accept(state);}).catch(report);
+    return()=>{active=false;unsubscribe();};
+  },[]);
+  async function respondClose(choice:CloseChoice){
+    if(!closeState||closeResponding||closeState.phase!=='confirm')return;
+    setCloseResponding(true);
+    try{await window.studio.respondClose(closeState.id,choice);}catch(error){report(error);}finally{setCloseResponding(false);}
+  }
 
   useEffect(() => {
     function key(event: KeyboardEvent) {
-      if (modal !== null) return;
+      if (event.defaultPrevented || modal !== null || closeState || (event.target instanceof Element && event.target.closest('[role="dialog"]'))) return;
       if (event.ctrlKey && event.key === 's') {
         event.preventDefault();
         void run(() => window.studio.save(event.shiftKey));
@@ -136,7 +152,8 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
       </form>
     </section> : <>
       <nav className="toolbar">
-        <button onClick={() => setWelcome(true)}>{t('new')}</button>
+        <button disabled={working} onClick={() => setWelcome(true)}>{t('new')}</button>
+        <button disabled={working} onClick={()=>void run(()=>window.studio.createPreset('cloud-network',language))}>{t('cloudPreset')}</button>
         <button onClick={() => void openProject()} disabled={working}>{t('open')}</button>
         <button className="primary" onClick={() => void run(() => window.studio.save())} disabled={working}>{t('save')}</button>
         <button onClick={() => void run(() => window.studio.save(true))} disabled={working}>{t('saveAs')}</button>
@@ -145,15 +162,15 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
         <button disabled={!snapshot.canRedo || working} onClick={() => dispatch({type:'redo'})}>{t('redo')}</button>
         <span className="toolbar-spacer" />
         <button onClick={() => void showRecovery()} disabled={working}>{t('recovery')}</button>
-        <button onClick={() => { localStorage.removeItem('alert-studio-workspace'); setWorkspace(value => value + 1); }}>{t('reset')}</button>
-        <button onClick={() => setModal('extensions')}>{t('extensions')}</button>
+        <button disabled={working} onClick={() => { localStorage.removeItem('alert-studio-workspace'); setWorkspace(value => value + 1); }}>{t('reset')}</button>
+        <button disabled={working} onClick={() => setModal('extensions')}>{t('extensions')}</button>
       </nav>
       {session.usedBackup && <div className="notice-banner" role="alert">{t('backupNotice')}</div>}
       {session.recovered && <div className="notice-banner" role="alert">{t('recoveredNotice')}</div>}
       <div className="editor">
         <aside className="tool-rail">
           <span className="eyebrow">{t('add')}</span>
-          {registry.effects.map(effect => <button key={effect.id} onClick={() => dispatch({type:'add',effect:effect.id})}>{effect.label[language]} +</button>)}
+          {registry.effects.map(effect => <button disabled={working} key={effect.id} onClick={() => dispatch({type:'add',effect:effect.id})}>{effect.label[language]} +</button>)}
           <span className="eyebrow section-label">{t('detach')}</span>
           {registry.panels.map(panel => <button key={panel.id} className="quiet-button" onClick={() => void run(() => window.studio.detach(panel.id))}>{panel.label[language]} ↗</button>)}
         </aside>
@@ -167,6 +184,18 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
         <i />{t(autosaveKeys[session.autosave])}{session.autosave === 'saved' && savedTime ? ` · ${savedTime}` : ''}
       </span>
     </footer>
+    {closeState&&!closeState.owner&&<div className="notice-banner" role="status">{t('closeElsewhere')}</div>}
+    {closeState?.owner&&<Dialog title={t('closeTitle')} closeLabel={t('closeCancel')}
+      closeDisabled={closeResponding||closeState.phase!=='confirm'} onClose={()=>void respondClose('cancel')}>
+      <p>{t(closeState.phase==='saving'?'closeSaving':closeState.phase==='closing'?'closeFinishing':'closeIntro')}</p>
+      <h3>{closeState.name}</h3><p className="close-folder">{closeState.folder??t('unsavedProject')}</p>
+      <p>{t(closeState.folder?'closeDiscardHint':'closeUnsavedDiscardHint')}</p>
+      {closeState.error&&<div role="alert" className={closeState.error==='closeSaveCanceled'?'':'status-error'}><p>{t(closeState.error)}</p>{closeState.detail&&<p className="caption close-folder">{closeState.detail}</p>}</div>}
+      <div className="dialog-actions">
+        <button className="primary" disabled={closeResponding||closeState.phase!=='confirm'} onClick={()=>void respondClose('save')}>{t('closeSave')}</button>
+        <button disabled={closeResponding||closeState.phase!=='confirm'} onClick={()=>void respondClose('discard')}>{t('closeDiscard')}</button>
+      </div>
+    </Dialog>}
 
     {modal === 'extensions' && <Dialog title={t('extensions')} closeLabel={t('close')} onClose={() => setModal(null)}>
       <p>{t('trusted')}</p>
