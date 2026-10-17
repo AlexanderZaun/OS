@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { Snapshot, Command } from '../../contracts/project';
 import type { RecoveryInfo, SessionStatus } from '../../contracts/recovery';
 import type {WindowCloseState,CloseChoice} from '../../contracts/close';
 import type { Registry } from '../bootstrap/registry';
 import type { Language, PanelProps } from '../../sdk/ui';
-import { Workspace } from '../../adapters/workspace-dockview/Workspace';
+import { Workspace, type WorkspaceHandle } from '../../adapters/workspace-dockview/Workspace';
 import { Dialog } from '../../ui-kit/Dialog';
 import { translator, type TranslationKey } from '../../locales/platform';
 
@@ -27,6 +27,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
   const working=operationWorking||closeState!==null;
   const [transitioning, setTransitioning] = useState(false);
   const [workspace, setWorkspace] = useState(0);
+  const workspaceRef=useRef<WorkspaceHandle>(null);
   const [session, setSession] = useState(initialSession);
   const [recoveries, setRecoveries] = useState<RecoveryInfo[]>([]);
   const [name, setName] = useState('My alert');
@@ -163,18 +164,13 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
         <span className="toolbar-spacer" />
         <button onClick={() => void showRecovery()} disabled={working}>{t('recovery')}</button>
         <button disabled={working} onClick={() => { localStorage.removeItem('alert-studio-workspace'); setWorkspace(value => value + 1); }}>{t('reset')}</button>
+        <button disabled={working} onClick={()=>workspaceRef.current?.showPanels()}>{t('managePanels')}</button>
         <button disabled={working} onClick={() => setModal('extensions')}>{t('extensions')}</button>
       </nav>
       {session.usedBackup && <div className="notice-banner" role="alert">{t('backupNotice')}</div>}
       {session.recovered && <div className="notice-banner" role="alert">{t('recoveredNotice')}</div>}
       <div className="editor">
-        <aside className="tool-rail">
-          <span className="eyebrow">{t('add')}</span>
-          {registry.effects.map(effect => <button disabled={working} key={effect.id} onClick={() => dispatch({type:'add',effect:effect.id})}>{effect.label[language]} +</button>)}
-          <span className="eyebrow section-label">{t('detach')}</span>
-          {registry.panels.map(panel => <button key={panel.id} className="quiet-button" onClick={() => void run(() => window.studio.detach(panel.id))}>{panel.label[language]} ↗</button>)}
-        </aside>
-        <Workspace panels={registry.panels} props={props} instance={workspace} />
+        <Workspace ref={workspaceRef} panels={registry.panels} props={props} instance={workspace} onDetach={type=>void run(()=>window.studio.detach(type))} />
       </div>
     </>}
 
@@ -207,7 +203,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
         <button onClick={() => void run(() => window.studio.extensionFolder())}>{t('folder')}</button>
       </div>
       <p className="caption">{t('safe')}</p>
-      {registry.panels.filter(panel => !['canvas','layers','properties'].includes(panel.id)).map(panel => <div className="extension-row" key={panel.id}>{panel.label[language]}</div>)}
+      {registry.panels.filter(panel => !['canvas','layers','properties','panel-manager','objects'].includes(panel.id)).map(panel => <div className="extension-row" key={panel.id}>{panel.label[language]}</div>)}
     </Dialog>}
 
     {modal === 'recovery' && <Dialog title={t('recovery')} closeLabel={t('close')} onClose={() => setModal(null)}>

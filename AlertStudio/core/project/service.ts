@@ -1,5 +1,6 @@
 import type { Command, Project, ProjectService, Snapshot } from '../../contracts/project';
 import type { Effect } from '../../sdk';
+import type {ObjectTemplate} from '../../contracts/object-template';
 export class Projects implements ProjectService {
   private project: Project;
   private selected: string | null = null;
@@ -7,7 +8,7 @@ export class Projects implements ProjectService {
   private saved = '';
   private undo: Project[] = [];
   private redo: Project[] = [];
-  constructor(private effects: () => Effect[], private id = () => crypto.randomUUID()) {
+  constructor(private effects: () => Effect[], private id = () => crypto.randomUUID(), private templates:()=>ObjectTemplate[] = () => []) {
     this.project = { id: this.id(), name: 'Untitled', format: 1, width: 1920, height: 1080, background: 'transparent', objects: [], modules:{} };
     this.markSaved();
   }
@@ -24,9 +25,12 @@ export class Projects implements ProjectService {
     const next=structuredClone(this.project);
     if(command.type==='add') {
       const effect=this.effects().find(e=>e.id===command.effect); if(!effect) throw Error('Missing effect');
+      const template=command.template===undefined?this.templates().find(t=>t.effect===effect.id):this.templates().find(t=>t.id===command.template&&t.effect===effect.id);
+      if(command.template!==undefined&&!template)throw Error('Missing object template');
+      if(template&&Object.keys(template.values).some(key=>!effect.settings.some(s=>s.id===key)))throw Error('Unknown template setting');
       if(next.modules[effect.id]&&next.modules[effect.id]!==effect.version)throw Error('Module version requires migration');
       next.modules[effect.id]=effect.version;
-      const object={id:this.id(),type:effect.id,name:effect.label.en,visible:true,settings:Object.fromEntries(effect.settings.map(s=>[s.id,structuredClone(s.default)]))};
+      const object={id:this.id(),type:effect.id,name:template?.label.en??effect.label.en,visible:true,settings:{...Object.fromEntries(effect.settings.map(s=>[s.id,structuredClone(s.default)])),...structuredClone(template?.values??{})}};
       next.objects.push(object); this.selected=object.id;
     } else {
       const object=next.objects.find(o=>o.id===command.id); if(!object) throw Error('Missing object');

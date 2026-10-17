@@ -3,3 +3,5 @@ dist/
 artifacts/
 .test-data/
 *.log
+/Launch.exe
+/tmp/

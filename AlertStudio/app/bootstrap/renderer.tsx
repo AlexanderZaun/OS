@@ -7,7 +7,9 @@ import { register as network } from '../../modules/effects/network/src/register'
 import { register as layers } from '../../modules/panels/layers/register';
 import { register as properties } from '../../modules/panels/properties/register';
 import { register as canvas } from '../../modules/panels/canvas/register';
+import { register as panelManager } from '../../modules/panels/panel-manager/register';
+import { register as objects } from '../../modules/panels/object-catalog/register';
 import { Shell } from '../shell/Shell';
 import '../shell/style.css';
-async function bootstrap(){const registry=new Registry();for(const register of [text,fog,stars,network,layers,properties,canvas])registry.add({register});await registry.external();const snapshot=await window.studio.snapshot();createRoot(document.getElementById('root')!).render(<Shell registry={registry} initial={snapshot}/>);addEventListener('unload',()=>registry.shutdown());}
+async function bootstrap(){const registry=new Registry();for(const register of [text,fog,stars,network,layers,properties,canvas,panelManager,objects])registry.add({register});await registry.external();const snapshot=await window.studio.snapshot();createRoot(document.getElementById('root')!).render(<Shell registry={registry} initial={snapshot}/>);addEventListener('unload',()=>registry.shutdown());}
 void bootstrap().catch(error=>{document.getElementById('root')!.textContent=String(error);});

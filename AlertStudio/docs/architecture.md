@@ -1,5 +1,11 @@
 # Архитектура текущего участка
 
+Каталог зарегистрирован как обычный panel module objects через SDK UiHost; Shell больше не содержит отдельный aside с меню. Workspace adapter добавляет его слева и мигрирует старую раскладку через marker object-catalog-v1. Main разрешает только конкретный window:panel objects, как для остальных встроенных панелей; отдельный renderer использует тот же компонент и авторитетную службу проекта. Локальные категории синхронизируются через storage events между окнами и собственное уведомление между экземплярами в одном renderer.
+
+Каталог: modules/panels/object-catalog строит элементы из effects и object templates, вычисляет исходные категории по активным source definitions, хранит пользовательское распределение отдельно в localStorage. Shell содержит только включение каталога и кнопку показа управления панелями. modules/panels/panel-manager использует optional PanelProps.workspace (метаданные/open/detach), не импортируя Dockview/Electron. Workspace adapter отвечает за размещение, single management instance, upgrade старой раскладки и сохранение. Дублирующие rail/footer controls удалены. См. catalog-and-panels.md.
+
+Создание объектов: bootstrap передаёт Projects декларативные ObjectTemplate; команда add может выбирать template ID, при отсутствии ID используется первый шаблон типа. Шаблоны встроенных объектов получают оформление из существующей сцены-примера, очищая project-local ссылки. Core не импортирует конкретные эффекты или preset JSON; шаблон копируется только при создании. SDK Effect.settings/defaults и evaluate не изменялись, старые сохранённые/неполные данные не переоформляются. Подробности — object-creation.md.
+
 `contracts/project.ts` описывает данные и команды. `core/project/service.ts` — единственная авторитетная модель и история в Electron main; snapshots копируются, UI не владеет истиной. `core/modules/order.ts` проверяет ID и граф точных зависимостей. Ядро не импортирует платформенные библиотеки.
 
 `sdk/index.ts` — независимые данные эффекта, определения настроек, примитивы и backend. `sdk/ui.ts` — явно React-специфичный контракт панели. Built-in панели и внешний пример вызывают один `register(host)`; стандартный эффект использует `registerEffect`. Bootstrap связывает службы; Dockview знает о размещении, содержимое панели — нет.

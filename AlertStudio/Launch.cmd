@@ -1,16 +1,6 @@
 @echo off
-pushd "%~dp0"
-if not exist "node_modules\electron\dist\electron.exe" (
-  echo Install dependencies with pnpm install first.
-  pause
-  popd
-  exit /b 1
+if exist "%~dp0Launch.exe" (
+  start "" "%~dp0Launch.exe" %*
+  exit /b
 )
-if not exist "dist\desktop\main.cjs" (
-  echo Build the application with pnpm build first.
-  pause
-  popd
-  exit /b 1
-)
-"node_modules\electron\dist\electron.exe" .
-popd
+start "" /d "%~dp0" "%~dp0node_modules\electron\dist\electron.exe" "%~dp0." %*

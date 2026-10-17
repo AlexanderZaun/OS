@@ -1,5 +1,7 @@
 # SDK 0.1 — внутренний экспериментальный
 
+PanelProps.workspace — optional UI-поле с данными {panels:[{id,label}],open(type),detach(type)}. Предоставляется внутри основной Dockview-области, в отдельных окнах может отсутствовать. Это ограниченные UI-действия; raw Dockview API и Electron IPC модулю не выдаются. Встроенная перемещаемая панель управления использует этот контракт. Сохранённые данные проекта/версии SDK не менялись; SDK остаётся экспериментальным.
+
 StarPoint.baseX/baseY optional: исходные локальные координаты без анимационного дрейфа/блуждания. Network topology=stable выбирает соседей по ним, затем рисует текущие x/y. При отсутствии metadata использует x/y, поэтому внешнему эффекту для устойчивого графа нужны постоянные ID и rest coordinates. Project format/SDK version не изменены.
 
 Runtime StarField.cloud optional содержит {offsetX,offsetY,width,height,field:CloudField}; offset — мировой относительно центра primitive stars. Network может использовать это для маски без отдельного project source setting. Primitive.warning поддерживает missing-mask; SceneEvaluation преобразует его в одноимённую диагностику. Профили NetworkFrame edges.samples — только runtime data; формат проектных значений не меняется. См. line-mask.md.

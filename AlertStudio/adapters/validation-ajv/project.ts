@@ -12,10 +12,10 @@ const variants=[
   {type:{const:'reorder'},id,direction:{enum:['up','down']}},
   {type:{const:'rename'},id,name:{type:'string',minLength:1,maxLength:200}},
   {type:{const:'move'},id,targetId:id,placement:{enum:['above','below']},revision:{type:'integer',minimum:0}},
-  {type:{const:'add'},effect:id}, {type:{const:'select'},id:{anyOf:[id,{type:'null'}]}},
+  {type:{const:'add'},effect:id,template:id}, {type:{const:'select'},id:{anyOf:[id,{type:'null'}]}},
   {type:{enum:['remove','duplicate','visibility']},id}, {type:{const:'set'},id,key:{type:'string'},value},
   {type:{const:'patch'},id,values:{type:'object',minProperties:1,maxProperties:100,propertyNames:{pattern:'^[a-zA-Z][a-zA-Z0-9-]{0,63}$'},additionalProperties:value},revision:{type:'integer',minimum:0}},
   {type:{enum:['undo','redo']}}
-].map(properties=>({type:'object',additionalProperties:false,required:Object.keys(properties),properties}));
+].map(properties=>({type:'object',additionalProperties:false,required:Object.keys(properties).filter(key=>key!=='template'),properties}));
 const check=new Ajv({allowUnionTypes:true}).compile({oneOf:variants});
 export function validateCommand(raw:unknown):Command { if(!check(raw)) throw Error('Invalid command'); return raw as Command; }

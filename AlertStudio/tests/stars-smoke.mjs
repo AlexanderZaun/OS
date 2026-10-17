@@ -11,7 +11,12 @@ const env={...process.env,ALERT_STUDIO_DATA:data};delete env.ELECTRON_RUN_AS_NOD
 const errors=[];let app;
 try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Звёзды +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
+  // Exercise standalone playback explicitly; the creation template starts in linked cloud mode.
+  await page.getByLabel('Режим поля',{exact:true}).selectOption('field');
+  await page.getByLabel('Количество звёзд',{exact:true}).fill('220');
+  await page.getByLabel('Зерно генерации',{exact:true}).fill('73');
+  await page.getByLabel('Цвет звёзд',{exact:true}).fill('#c6ddff');
   await page.getByLabel('Цвет звёзд',{exact:true}).waitFor();const canvas=page.locator('canvas').first();
   const pixels=()=>canvas.evaluate(c=>{const data=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let hash=2166136261,visible=0;for(let i=0;i<data.length;i++){hash=Math.imul(hash^data[i],16777619);if(i%4===3&&data[i])visible++;}return {hash:hash>>>0,visible};});
   await expect.poll(async()=>(await pixels()).visible).toBeGreaterThan(0);const initial=await pixels();assert.ok(initial.visible<1920*1080);

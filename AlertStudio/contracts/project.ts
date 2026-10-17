@@ -2,7 +2,7 @@ export type Value = string | number | boolean;
 export interface SceneObject { id: string; type: string; name: string; visible: boolean; settings: Record<string, Value>; }
 export interface Project { id: string; name: string; format: 1; width: number; height: number; background: string; objects: SceneObject[]; modules: Record<string,string>; }
 export type Command =
-  | { type: 'add'; effect: string }
+  | { type: 'add'; effect: string; template?:string }
   | { type: 'set'; id: string; key: string; value: Value }
   | { type: 'patch'; id: string; values: Record<string,Value>; revision:number }
   | { type: 'reorder'; id:string; direction:'up'|'down' }

@@ -11,7 +11,8 @@ try{
   app=await electron.launch({args:['.'],env});const page=await app.firstWindow();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));
   await isolateDesktopPointer(app,page);
   await page.evaluate(()=>{window.editEvents=[];for(const type of ['pointerdown','pointermove','pointerup','pointercancel','lostpointercapture','blur'])window.addEventListener(type,e=>{const c=document.querySelector('canvas')?.getBoundingClientRect();window.editEvents.push({type,x:e.clientX,y:e.clientY,id:e.pointerId,buttons:e.buttons,target:e.target?.className,mode:document.querySelector('.canvas-stage')?.dataset.navigation,canvas:c?{x:c.x,y:c.y,width:c.width,height:c.height}:null});},true);});
-  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Звёзды +',exact:true}).click();
+  await page.getByRole('button',{name:'Создать проект →'}).click();await page.getByRole('button',{name:'Мелкие звёзды +',exact:true}).click();
+  await page.getByLabel('Режим поля',{exact:true}).selectOption('field');
   for(const [label,value] of [['Центр X','500'],['Центр Y','400'],['Ширина поля','400'],['Высота поля','300'],['Поворот поля','30']])await page.getByLabel(label,{exact:true}).fill(value);
   const state=()=>page.evaluate(()=>window.studio.snapshot());
   await page.waitForFunction(async()=>(await window.studio.snapshot()).project.objects[0]?.settings.rotation===30);

@@ -12,14 +12,25 @@
 .toolbar-spacer { flex: 1; }
 .divider { width: 1px; height: 22px; margin: 0 7px; background: var(--studio-border); flex-shrink: 0; }
 .editor { flex: 1; min-height: 0; display: flex; }
-.tool-rail { width: 155px; flex-shrink: 0; padding: 12px 10px; border-right: 1px solid var(--studio-border); display: flex; flex-direction: column; gap: 7px; overflow: auto; }
-.tool-rail button { text-align: left; font-size: 12px; line-height: 1.4; }
-.tool-rail .eyebrow { letter-spacing: .6px; margin-bottom: 4px; }
-.section-label { margin-top: 25px; }
+.object-catalog-panel { padding: 12px 10px; display: flex; flex-direction: column; gap: 7px; }
+.object-catalog-panel button { text-align: left; font-size: 12px; line-height: 1.4; }
+.object-catalog-panel .eyebrow { letter-spacing: .6px; margin-bottom: 4px; }
+.catalog-heading .eyebrow { margin: 0 0 8px; }
+.catalog-heading button { width: 100%; }
+.catalog-section { display: flex; flex-direction: column; gap: 7px; padding-top: 12px; border-top: 1px solid var(--studio-border); }
+.catalog-section h2 { margin: 0; font-size: 12px; }
+.catalog-section p { margin: 0; font-size: 10px; line-height: 1.4; }
+.catalog-section button { display: flex; flex-direction: column; gap: 3px; }
+.catalog-section button small { font-size: 10px; color: var(--studio-muted); }
+.catalog-assignments label { display: grid; grid-template-columns: minmax(0,1fr) minmax(130px,1fr); align-items: center; gap: 12px; }
+.panel-manager { padding: 6px 8px; }
+.panel-manager > p { margin: 0 0 5px; font-size: 10px; }
+.panel-manager-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.panel-manager-item { display: flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid var(--studio-border); border-radius: var(--studio-radius); }
+.panel-manager-item span { padding-right: 4px; font-size: 12px; overflow-wrap: anywhere; }
+.panel-manager-item button { padding: 3px; min-width: 30px; }
 .workspace { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .workspace > div:first-child { flex: 1; min-height: 0; }
-.panel-open-buttons { display: flex; flex-wrap: wrap; gap: 5px; padding: 7px; background: var(--studio-surface); border-top: 1px solid var(--studio-border); }
-.panel-open-buttons button { min-height: 27px; font-size: 11px; }
 .panel-body { height: 100%; padding: var(--studio-panel-padding); overflow: auto; background: var(--studio-surface); }
 .layer-row { display: flex; align-items: center; margin-bottom: 6px; border: 1px solid transparent; border-radius: var(--studio-radius); background: var(--studio-raised); }
 .layer-row.selected { border-color: var(--studio-subtle); background: var(--studio-accent-soft); }
@@ -138,6 +149,6 @@ footer { min-height: 30px; display: flex; align-items: center; gap: 16px; paddin
 .detached-caption { padding: 12px 16px; font-size: 11px; color: var(--studio-muted); border-bottom: 1px solid var(--studio-border); }
 .detached-content { flex: 1; min-height: 0; overflow: hidden; }
 @media (max-width: 1050px) { .toolbar { flex-wrap: wrap; } .toolbar-spacer { display: none; } .welcome h1 { font-size: 34px; } }
-@media (max-width: 800px) { .welcome { gap: 30px; padding: 26px; } .welcome-copy { max-width: 300px; } .tool-rail { width: 125px; } .topbar { gap: 10px; padding: 0 12px; } }
-@media (max-width: 650px) { .welcome { flex-direction: column; align-items: stretch; justify-content: flex-start; } .welcome-copy { max-width: none; } .welcome h1 { font-size: 28px; } .project-form { width: 100%; padding: 20px; } .tool-rail { width: 100px; } .project-title small { display: none; } .canvas-tools { flex-wrap: wrap; } .autosave-status { font-size: 9px; } }
+@media (max-width: 800px) { .welcome { gap: 30px; padding: 26px; } .welcome-copy { max-width: 300px; } .topbar { gap: 10px; padding: 0 12px; } }
+@media (max-width: 650px) { .welcome { flex-direction: column; align-items: stretch; justify-content: flex-start; } .welcome-copy { max-width: none; } .welcome h1 { font-size: 28px; } .project-form { width: 100%; padding: 20px; } .project-title small { display: none; } .canvas-tools { flex-wrap: wrap; } .autosave-status { font-size: 9px; } }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }

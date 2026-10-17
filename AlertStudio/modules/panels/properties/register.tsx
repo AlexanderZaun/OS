@@ -1,5 +1,6 @@
 import type { PanelProps, UiHost } from '../../../sdk/ui';
 import { translator } from '../../../locales/platform';
+import type {Setting} from '../../../sdk';
 
 export function PropertiesPanel({snapshot,dispatch,language,effects,interactionPending}: PanelProps) {
   const t = translator(language);
@@ -9,11 +10,13 @@ export function PropertiesPanel({snapshot,dispatch,language,effects,interactionP
     <h2>{t('scene')}</h2><p>{snapshot.project.width} × {snapshot.project.height}</p><p>{t('empty')}</p>
   </div>;
   const settings=effect?.settings.filter(s=>!s.when||[s.when,...s.when.and??[]].every(c=>(object.settings[c.key]??effect.settings.find(d=>d.id===c.key)?.default)===c.equals))??[];
-  const groups=[...new Set(settings.map(s=>s.group?.id??'base'))];
-  return <div className="panel-body properties-panel">
-    <h2>{object.name}</h2>
-    {!effect || effect.version !== snapshot.project.modules[object.type] ? <p role="alert">{t('missing')}</p> :
-      groups.map(group=><details open key={group}><summary>{settings.find(s=>s.group?.id===group)?.group?.label[language]??t('base')}</summary>{settings.filter(s=>(s.group?.id??'base')===group).map(setting => <label key={setting.id}>
+  const sources=effect?.settings.filter(setting=>setting.type==='source')??[];
+  const linkKeys=new Set(sources.flatMap(setting=>[setting.id,...(setting.when?[setting.when,...setting.when.and??[]].map(condition=>condition.key):[])]));
+  const links=settings.filter(setting=>linkKeys.has(setting.id)).sort((a,b)=>Number(b.type==='source')-Number(a.type==='source'));
+  const properties=settings.filter(setting=>!linkKeys.has(setting.id));
+  const groups=[...new Set(properties.map(s=>s.group?.id??'base'))];
+  const renderSetting=(setting:Setting) => {
+    return <label key={setting.id}>
         <span className="field-label">{setting.label[language]}{setting.unit && <small>{setting.unit}</small>}</span>
         {setting.type==='source'?<>
           <select aria-label={setting.label[language]} disabled={interactionPending} value={String(object.settings[setting.id]??'')}
@@ -34,7 +37,14 @@ export function PropertiesPanel({snapshot,dispatch,language,effects,interactionP
             if (setting.type === 'number' && event.target.value === '') return;
             dispatch({type:'set',id:object.id,key:setting.id,value:setting.type === 'number' ? Number(event.target.value) : event.target.value});
           }} />}
-      </label>)}</details>)}
+      </label>;
+  }
+  return <div key={`${snapshot.project.id}:${object.id}`} className="panel-body properties-panel">
+    <h2>{object.name}</h2>
+    {!effect || effect.version !== snapshot.project.modules[object.type] ? <p role="alert">{t('missing')}</p> : <>
+      {links.length>0&&<details open className="properties-links"><summary>{t('sourceLinks')}</summary>{links.map(renderSetting)}</details>}
+      {groups.map(group=><details open key={group}><summary>{properties.find(s=>s.group?.id===group)?.group?.label[language]??t('base')}</summary>{properties.filter(s=>(s.group?.id??'base')===group).map(renderSetting)}</details>)}
+    </>}
   </div>;
 }
 

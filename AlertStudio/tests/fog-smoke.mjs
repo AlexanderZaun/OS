@@ -23,12 +23,12 @@ try {
   await page.getByLabel('Время (секунды)',{exact:true}).fill('12');await expect.poll(async()=>(await pixels()).hash).not.toBe(six.hash);
   await page.getByLabel('Время (секунды)',{exact:true}).fill('6');await expect.poll(async()=>(await pixels()).hash).toBe(six.hash);
   await page.getByLabel('Плотность',{exact:true}).fill('0');await expect.poll(async()=>(await pixels()).visible).toBe(0);
-  await page.getByLabel('Плотность',{exact:true}).fill('55');await expect.poll(async()=>(await pixels()).hash).toBe(six.hash);
+  await page.getByLabel('Плотность',{exact:true}).fill('90');await expect.poll(async()=>(await pixels()).hash).toBe(six.hash);
   await page.getByRole('button',{name:'Дублировать',exact:true}).click();
   await page.getByLabel('Цвет тумана',{exact:true}).fill('#e9a070');
   await page.getByLabel('Форма области',{exact:true}).selectOption('rounded');
   await page.waitForFunction(async()=>{const s=await window.studio.snapshot();return s.project.objects[1]?.settings.shape==='rounded';});
-  const state=await page.evaluate(()=>window.studio.snapshot());assert.equal(state.project.objects[0].settings.color,'#7896bf');assert.equal(state.project.objects[1].settings.color,'#e9a070');
+  const state=await page.evaluate(()=>window.studio.snapshot());assert.equal(state.project.objects[0].settings.color,'#101c45');assert.equal(state.project.objects[1].settings.color,'#e9a070');
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(1920,1080));
   await page.screenshot({path:'artifacts/screenshots/fog-editor-1080.png'});
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(900,650));
