@@ -1,9 +1,1 @@
-node_modules/
-dist/
-artifacts/
-.test-data/
-*.log
-/Launch.exe
-/release/
-/Data/
-/tmp/
+/Для установки/
