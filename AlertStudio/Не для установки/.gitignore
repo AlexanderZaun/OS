@@ -1,8 +1,0 @@
-node_modules/
-dist/
-artifacts/
-.test-data/
-*.log
-/Launch.exe
-/Data/
-/tmp/

@@ -1,1 +1,0 @@
-{"id":"size","type":"number","default":64,"min":8,"max":300,"unit":"px","animatable":true,"label":{"ru":"Размер текста","en":"Font size"}}
