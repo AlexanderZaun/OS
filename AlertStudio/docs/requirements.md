@@ -19,11 +19,11 @@
 | R08 | RU/EN | platform dictionaries + module labels | UI switch | Частично: fallback/long-label/error localization audit |
 | R09 | Старт/проект | create/open/save/save-as/dirty warning, autosave/recovery UI | Save/open, crash+normal-close recovery, unsaved restore copy | Частично: recent projects отсутствуют |
 | R10 | Отдельные панели | дополнительные окна, общая служба | Edit + undo cross-window | Частично: перенос/monitor recovery впереди |
-| R11 | Три этапа/две области | отсутствуют | — | Запланировано |
+| R11 | Стадии и четыре рабочие области (уточнение пользователя) | Общая композиция, main/intro/outro/assembly, длительности и групповой fade | notification.test.ts и notification-workspace-smoke.mjs | Частично: индивидуальная анимация и монтаж впереди |
 | R12 | Монтаж/звук | отсутствуют | — | Запланировано |
 | R13 | Аудио режимы | отсутствуют | — | Запланировано |
 | R14 | Визуальный ориентир | аудит + три исходных baseline; собственный fog | Actual reference replay/capture, собственные fog checks | Цель уточнена пользователем: собственные решения, без копирования алгоритмов; остальные эффекты впереди |
-| R15 | Прозрачный экспорт | отсутствует | Проверена только альфа Canvas, не файл | Запланировано |
+| R15 | Прозрачный экспорт | PNG текущего кадра | Проверены файл, разрешение, пиксели/альфа, текущая стадия, отмена и ошибка записи | Первый вариант; видео впереди |
 | R16 | Пресеты/совместимость | exact module versions, unknown values retained | Unknown-module roundtrip | Частично: presets/migrations отсутствуют |
 | R17 | Циклическая подложка | отсутствует | — | Запланировано |
 | R18 | Поздние интеграции | отдельные будущие exporter profiles/renderer bindings | Никаких service SDK/network calls в продукте | Документировано, интеграции исключены сейчас |

@@ -1,5 +1,6 @@
 import type {Project} from '../../contracts/project';
 import type {Effect,Primitive} from '../../sdk';
+import {displayedObjects} from './layer-editor';
 export interface SceneDiagnostic {objectId:string;code:'missing-source'|'wrong-source'|'cycle'|'missing-effect'|'evaluation-error'|'inactive-source'|'limit'|'missing-mask';}
 export function createSceneEvaluation(project:Project,effects:Effect[],time:number){
   const objects=new Map(project.objects.map(o=>[o.id,o])),cache=new Map<string,Primitive[]>(),visiting=new Set<string>();
@@ -36,4 +37,4 @@ export function createSceneEvaluation(project:Project,effects:Effect[],time:numb
     return evaluate(target.id)[0] as Primitive<T>|undefined;
   }})};
 }
-export function evaluateScene(project:Project,effects:Effect[],time:number){const scene=createSceneEvaluation(project,effects,time);return {primitives:project.objects.filter(o=>o.visible).flatMap(o=>scene.evaluate(o.id).map(p=>({...p,ownerId:o.id}))),diagnostics:scene.diagnostics,evaluatedIds:scene.evaluatedIds};}
+export function evaluateScene(project:Project,effects:Effect[],time:number){const scene=createSceneEvaluation(project,effects,time);const visible=displayedObjects(project);return {primitives:visible.flatMap(o=>scene.evaluate(o.id).map(p=>({...p,ownerId:o.id}))),layers:visible.map(o=>({id:o.id,style:o.layer})),diagnostics:scene.diagnostics,evaluatedIds:scene.evaluatedIds};}

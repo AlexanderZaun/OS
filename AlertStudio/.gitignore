@@ -4,4 +4,6 @@ artifacts/
 .test-data/
 *.log
 /Launch.exe
+/release/
+/Data/
 /tmp/

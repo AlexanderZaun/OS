@@ -9,12 +9,15 @@ import { Dialog } from '../../ui-kit/Dialog';
 import { translator, type TranslationKey } from '../../locales/platform';
 import {MenuBar,type MenuDefinition,type MenuItem} from '../../ui-kit/MenuBar';
 import {usePlayback} from '../../modules/panels/canvas/usePlayback';
+import {NotificationWorkspace} from './NotificationWorkspace';
+import {renderPng} from '../../adapters/render-canvas2d/png';
+import {PasteSettings} from '../../modules/panels/properties/PasteSettings';
 
 const initialSession: SessionStatus = {autosave:'idle',savedAt:null,error:null,folder:null,usedBackup:false,recovered:false};
 const autosaveKeys: Record<SessionStatus['autosave'], TranslationKey> = {
   idle:'autosaveIdle',pending:'autosavePending',saving:'autosaveSaving',saved:'autosaveSaved',error:'autosaveError',
 };
-const knownErrors: TranslationKey[] = ['projectBusy','projectUnreadable','projectOperationBusy','folderLockUnsupported','projectFolderContainsOtherProject'];
+const knownErrors: TranslationKey[] = ['projectBusy','projectUnreadable','projectOperationBusy','folderLockUnsupported','projectFolderContainsOtherProject','layerLocked','settingsClipboardEmpty','settingsPasteInvalid','settingsPasteIncompatible','settingsPasteLinksInvalid','historyUnavailable'];
 
 export function Shell({registry, initial}: {registry: Registry; initial: Snapshot}) {
   const detached = new URLSearchParams(location.search).get('panel');
@@ -22,7 +25,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
   const [language, setLanguage] = useState<Language>('ru');
   const [welcome, setWelcome] = useState(!detached && !initial.dirty && initial.project.objects.length === 0);
   const [hasWorkspace,setHasWorkspace]=useState(!welcome);
-  const [modal, setModal] = useState<'extensions' | 'recovery' | 'scene' | 'shortcuts' | 'about' | 'rename' | null>(null);
+  const [modal, setModal] = useState<'extensions' | 'recovery' | 'scene' | 'shortcuts' | 'about' | 'rename' | 'paste' | null>(null);
   const [rename,setRename]=useState({id:'',original:'',value:''});
   const [status, setStatus] = useState('');
   const [hasError, setHasError] = useState(false);
@@ -135,11 +138,13 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
       item('open',t('open'),()=>void openProject(),{disabled:working,shortcut:'Ctrl+O'}),
       item('save',t('save'),()=>void run(()=>window.studio.save()),{disabled:working,shortcut:'Ctrl+S'}),
       item('save-as',t('saveAs'),()=>void run(()=>window.studio.save(true)),{disabled:working,shortcut:'Ctrl+Shift+S'}),
+      item('export-png',t('exportPng'),()=>void run(async()=>{const frame=await window.studio.captureFrame();const bytes=await renderPng(frame,registry.effects,registry.canvasRenderers);const file=await window.studio.savePng(bytes,language);if(file)setStatus(`${t('pngSaved')}: ${file}`);}),{disabled:editorDisabled}),
       item('recovery',t('recovery'),()=>void showRecovery(),{disabled:working}),
     ]},
     {id:'edit',label:t('menuEdit'),items:[
       item('undo',t('undo'),()=>dispatch({type:'undo'}),{disabled:editorDisabled||!snapshot.canUndo,shortcut:'Ctrl+Z'}),
       item('redo',t('redo'),()=>dispatch({type:'redo'}),{disabled:editorDisabled||!snapshot.canRedo,shortcut:'Ctrl+Shift+Z'}),
+      item('history',t('actionHistory'),()=>workspaceRef.current?.show('history'),{disabled:editorDisabled}),
       item('extensions',t('extensions'),()=>setModal('extensions'),{disabled:working}),
       item('ru','Русский',()=>setLanguage('ru'),{checked:language==='ru',group:t('language')}),
       item('en','English',()=>setLanguage('en'),{checked:language==='en',group:t('language')}),
@@ -147,10 +152,15 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
     {id:'scene',label:t('menuScene'),items:[item('info',t('sceneInfo'),()=>setModal('scene'),{disabled:working}),
       item('fit',t('fit'),()=>workspaceRef.current?.canvas('fit'),{disabled:editorDisabled})]},
     {id:'object',label:t('menuObject'),items:[item('catalog',t('showCatalog'),()=>workspaceRef.current?.show('objects'),{disabled:editorDisabled}),
-      item('rename',t('renameObject'),()=>{if(selected){setRename({id:selected.id,original:selected.name,value:selected.name});setModal('rename');}},{disabled:editorDisabled||!selected,group:t('objectActions')}),
-      ...(['duplicate','visibility','remove'] as const).map(type=>item(type,t(type),()=>{if(selected)dispatch({type,id:selected.id});},{disabled:editorDisabled||!selected,...(type==='visibility'?{checked:selected?.visible??false}:{})})),
-      ...(['up','down'] as const).map(direction=>item(direction,t(direction==='up'?'layerUp':'layerDown'),()=>{if(selected)dispatch({type:'reorder',id:selected.id,direction});},{disabled:editorDisabled||!selected||(direction==='up'?objects.at(-1):objects[0])?.id===selected?.id})),
-      ...([true,false] as const).map(top=>item(top?'top':'bottom',t(top?'layerTop':'layerBottom'),()=>{if(selected)dispatch({type:'move',id:selected.id,targetId:(top?objects.at(-1):objects[0])!.id,placement:top?'above':'below',revision:snapshot.revision});},{disabled:editorDisabled||!selected||(top?objects.at(-1):objects[0])?.id===selected?.id})),
+      item('copy-settings',t('copySettings'),()=>{if(selected)dispatch({type:'settings-copy',id:selected.id});},{disabled:editorDisabled||!selected}),
+      item('paste-settings',t('pasteSettings'),()=>setModal('paste'),{disabled:editorDisabled||!selected||selected.editor?.locked||!snapshot.clipboard}),
+      item('lock',t('lockLayer'),()=>{if(selected)dispatch({type:'editor',id:selected.id,key:'locked',value:!selected.editor?.locked});},{disabled:editorDisabled||!selected,checked:selected?.editor?.locked??false}),
+      item('solo',t('soloLayer'),()=>{if(selected)dispatch({type:'editor',id:selected.id,key:'solo',value:!selected.editor?.solo});},{disabled:editorDisabled||!selected,checked:selected?.editor?.solo??false}),
+      item('clear-solo',t('clearSolo'),()=>dispatch({type:'clear-solo'}),{disabled:editorDisabled||!objects.some(o=>o.editor?.solo)}),
+      item('rename',t('renameObject'),()=>{if(selected){setRename({id:selected.id,original:selected.name,value:selected.name});setModal('rename');}},{disabled:editorDisabled||!selected||selected.editor?.locked,group:t('objectActions')}),
+      ...(['duplicate','visibility','remove'] as const).map(type=>item(type,t(type),()=>{if(selected)dispatch({type,id:selected.id});},{disabled:editorDisabled||!selected||(type==='remove'&&selected?.editor?.locked),...(type==='visibility'?{checked:selected?.visible??false}:{})})),
+      ...(['up','down'] as const).map(direction=>item(direction,t(direction==='up'?'layerUp':'layerDown'),()=>{if(selected)dispatch({type:'reorder',id:selected.id,direction});},{disabled:editorDisabled||!selected||selected.editor?.locked||(direction==='up'?objects.at(-1):objects[0])?.id===selected?.id})),
+      ...([true,false] as const).map(top=>item(top?'top':'bottom',t(top?'layerTop':'layerBottom'),()=>{if(selected)dispatch({type:'move',id:selected.id,targetId:(top?objects.at(-1):objects[0])!.id,placement:top?'above':'below',revision:snapshot.revision});},{disabled:editorDisabled||!selected||selected.editor?.locked||(top?objects.at(-1):objects[0])?.id===selected?.id})),
     ]},
     {id:'playback',label:t('menuPlayback'),items:[
       item('toggle',t(playback.state.playing?'pause':'play'),()=>playback.command({type:'toggle'}),{disabled:editorDisabled}),
@@ -168,12 +178,14 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
   ];
 
   return <main className={detached ? 'studio-shell detached-shell' : 'studio-shell'}>
+    {modal==='paste'&&<PasteSettings {...props} onClose={()=>setModal(null)}/>}
     <header className="topbar">
       <strong><i /> ALERT<span>STUDIO</span></strong>
-      <span className="project-title">{snapshot.project.name}<small>{t(snapshot.dirty ? 'dirty' : 'clean')}</small></span>
+      {!detached&&<MenuBar menus={menus} label={t('menuBar')} disabled={modal!==null||closeState!==null}/>}
+      <span className="project-title" data-dirty={snapshot.dirty} aria-label={`${snapshot.project.name} · ${t(snapshot.dirty ? 'dirty' : 'clean')}`} title={`${snapshot.project.name} · ${t(snapshot.dirty ? 'dirty' : 'clean')}`}>{snapshot.project.name}<small>{t(snapshot.dirty ? 'dirty' : 'clean')}</small></span>
       {detached&&<button className="quiet-button" onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}>{language.toUpperCase()}</button>}
     </header>
-    {!detached&&<MenuBar menus={menus} label={t('menuBar')} disabled={modal!==null||closeState!==null}/>}
+    {((!detached&&!welcome)||detached==='canvas')&&<NotificationWorkspace project={snapshot.project} workspace={playback.state.workspace??'main'} language={language} disabled={working||transitioning||modal!==null} dispatch={dispatch} preview={workspace=>playback.command({type:'preview',workspace})}/>}
 
     {detached ? <>
       <div className="detached-caption">{t('return')}</div>
@@ -213,7 +225,7 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
     </>}
 
     <footer>
-      <span className={hasError ? 'status-message status-error' : 'status-message'} role="status">{status || registry.diagnostics.join(' · ') || t('check')}</span>
+      <span className={hasError ? 'status-message status-error' : 'status-message'} role="status" title={status || registry.diagnostics.join(' · ') || t('check')}>{status || registry.diagnostics.join(' · ') || t('check')}</span>
       <span className="autosave-status" data-testid="autosave-status" data-state={session.autosave} title={session.error ?? session.folder ?? ''}>
         <i />{t(autosaveKeys[session.autosave])}{session.autosave === 'saved' && savedTime ? ` · ${savedTime}` : ''}
       </span>
@@ -223,8 +235,8 @@ export function Shell({registry, initial}: {registry: Registry; initial: Snapsho
     </Dialog>}
     {modal==='shortcuts'&&<Dialog title={t('shortcuts')} closeLabel={t('close')} onClose={()=>setModal(null)}><p>{t('shortcutsHint')}</p><p>{t('shortcutsProject')}</p><p>{t('shortcutsCanvas')}</p></Dialog>}
     {modal==='about'&&<Dialog title={t('about')} closeLabel={t('close')} onClose={()=>setModal(null)}><p>{t('aboutText')}</p><p>{t('aboutLimits')}</p></Dialog>}
-    {modal==='rename'&&<Dialog title={t('renameObject')} closeLabel={t('closeCancel')} onClose={()=>setModal(null)}><form onSubmit={e=>{e.preventDefault();if(!working&&!transitioning&&rename.value.trim()&&objects.some(o=>o.id===rename.id&&o.name===rename.original)){dispatch({type:'rename',id:rename.id,name:rename.value});setModal(null);}}}>
-      <label>{t('layerName')}<input autoFocus maxLength={200} value={rename.value} onChange={e=>setRename({...rename,value:e.target.value})}/></label><button className="primary" disabled={working||transitioning||!rename.value.trim()||!objects.some(o=>o.id===rename.id&&o.name===rename.original)}>{t('applyLayerName')}</button>
+    {modal==='rename'&&<Dialog title={t('renameObject')} closeLabel={t('closeCancel')} onClose={()=>setModal(null)}><form onSubmit={e=>{e.preventDefault();if(!working&&!transitioning&&rename.value.trim()&&objects.some(o=>o.id===rename.id&&o.name===rename.original&&!o.editor?.locked)){dispatch({type:'rename',id:rename.id,name:rename.value});setModal(null);}}}>
+      <label>{t('layerName')}<input autoFocus maxLength={200} value={rename.value} onChange={e=>setRename({...rename,value:e.target.value})}/></label><button className="primary" disabled={working||transitioning||!rename.value.trim()||!objects.some(o=>o.id===rename.id&&o.name===rename.original&&!o.editor?.locked)}>{t('applyLayerName')}</button>
     </form></Dialog>}
     {closeState&&!closeState.owner&&<div className="notice-banner" role="status">{t('closeElsewhere')}</div>}
     {closeState?.owner&&<Dialog title={t('closeTitle')} closeLabel={t('closeCancel')}

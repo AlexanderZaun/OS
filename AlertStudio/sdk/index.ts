@@ -1,4 +1,5 @@
 import type { Value } from '../contracts/project';
+import type {LayerStyle} from '../contracts/layer';
 export const SDK_VERSION = '0.1.0';
 export interface Manifest { id: string; version: string; kind: 'panel' | 'effect'; sdk: '0.1'; entry: string; dependencies: Record<string, string>; backends: string[]; files: Record<string, string>; }
 export interface SettingCondition {key:string;equals:Value;}
@@ -9,4 +10,5 @@ export interface EditorGeometry {position:{x:string;y:string}|((values:Record<st
 export interface EvaluationContext {source<T>(settingId:string):Primitive<T>|undefined;}
 export interface Effect { id: string; version: string; label: { ru: string; en: string }; settings: Setting[]; editor?:EditorGeometry; evaluate(values: Record<string, Value>, time: number,context?:EvaluationContext): Primitive[]; }
 export interface ModuleHost { registerEffect(effect: Effect): void; }
-export interface RenderBackend { render(primitives: Primitive[]): void; dispose(): void; }
+export interface RenderLayer {id:string;style?:LayerStyle;}
+export interface RenderBackend { render(primitives: Primitive[],opacity?:number,layers?:RenderLayer[]): void; dispose(): void; }

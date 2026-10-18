@@ -5,6 +5,7 @@ import type {ObjectBounds,Effect} from '../../../sdk';
 import type {SceneObject,Value} from '../../../contracts/project';
 import type {useViewport} from './useViewport';
 import {createSceneEvaluation} from '../../../core/scene/evaluate';
+import {displayedObjects} from '../../../core/scene/layer-editor';
 
 type Preview={id:string;values:Record<string,Value>};
 type Gesture={pointerId:number;revision:number;projectId:string;object:SceneObject|null;effect:Effect|null;startX:number;startY:number;scale:number;left:number;top:number;values:Record<string,Value>};
@@ -14,7 +15,7 @@ export function useObjectEditing(props:PanelProps,canvas:RefObject<HTMLCanvasEle
   const gesture=useRef<Gesture|null>(null),[preview,setPreview]=useState<Preview|null>(null);
   function measureText(text:string,font:string){const c=canvas.current!.getContext('2d')!;c.save();c.font=font;const width=c.measureText(text).width;c.restore();return width;}
   function bounds(object:SceneObject,effect:Effect|undefined):ObjectBounds|null{
-    if(!object.visible||!effect?.editor)return null;
+    if(!displayedObjects(latest.current.snapshot.project).some(o=>o.id===object.id)||!effect?.editor)return null;
     const context=createSceneEvaluation(latest.current.snapshot.project,latest.current.effects,0).contextFor(object.id);
     const result=effect.editor.bounds(object.settings,measureText,context);
     if(![result.x,result.y,result.width,result.height,result.rotation??0].every(Number.isFinite)||result.width<=0||result.height<=0)return null;
@@ -37,7 +38,8 @@ export function useObjectEditing(props:PanelProps,canvas:RefObject<HTMLCanvasEle
     event.preventDefault();event.currentTarget.focus({preventScroll:true});
     const rect=canvas.current!.getBoundingClientRect(),project=latest.current.snapshot.project;
     const point={x:(event.clientX-rect.left)*project.width/rect.width,y:(event.clientY-rect.top)*project.height/rect.height};
-    const object=[...project.objects].reverse().find(object=>{
+    const object=[...displayedObjects(project)].reverse().find(object=>{
+      if(object.editor?.locked)return false;
       const box=bounds(object,effectFor(object));if(!box)return false;
       const dx=point.x-box.x,dy=point.y-box.y,angle=box.rotation??0;
       return Math.abs(dx*Math.cos(angle)+dy*Math.sin(angle))<=box.width/2&&Math.abs(-dx*Math.sin(angle)+dy*Math.cos(angle))<=box.height/2;

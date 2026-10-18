@@ -16,11 +16,12 @@ export async function resizeWindow(app,page,width,height){
   await waitForCanvasLayout(page);
 }
 export async function waitForCanvasLayout(page){
+  await page.locator('.canvas-stage canvas').first().waitFor({state:'attached'});
   await page.evaluate(async()=>{
     let previous='',stable=0;
     for(let i=0;i<120;i++){
       await new Promise(requestAnimationFrame);
-      const canvas=document.querySelector('.canvas-stage canvas'),rect=canvas.getBoundingClientRect(),stage=canvas.parentElement.getBoundingClientRect();
+      const canvas=document.querySelector('.canvas-stage canvas');if(!canvas){previous='';stable=0;continue;}const rect=canvas.getBoundingClientRect(),stage=canvas.parentElement.getBoundingClientRect();
       const signature=[rect.x,rect.y,rect.width,rect.height,stage.x,stage.y,stage.width,stage.height].join(',');
       stable=signature===previous?stable+1:0;previous=signature;if(stable>=6)return;
     }

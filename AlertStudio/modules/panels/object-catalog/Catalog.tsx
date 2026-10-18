@@ -21,14 +21,13 @@ export function ObjectCatalog({effects,language,dispatch,interactionPending}:Pan
     try{localStorage.setItem(catalogStorageKey,JSON.stringify(next));window.dispatchEvent(new Event(changeEvent));}catch{}
   }
   return <>
-    <div className="catalog-heading"><span className="eyebrow">{t('add')}</span>
-      <button className="quiet-button" onClick={()=>setEditing(true)}>{t('organizeObjects')}</button></div>
+    <div className="catalog-heading"><button className="quiet-button" aria-label={t('organizeObjects')} title={t('organizeObjects')} onClick={()=>setEditing(true)}><span aria-hidden="true">⇅</span> {t('catalogSections')}</button></div>
     {(['independent','linked'] as const).map(group=><section className="catalog-section" data-category={group} aria-label={t(group==='independent'?'independentObjects':'linkedObjects')} key={group}>
-      <h2>{t(group==='independent'?'independentObjects':'linkedObjects')}</h2>
+      <h2 title={t(group==='independent'?'independentObjects':'linkedObjects')}>{t(group==='independent'?'independentObjects':'linkedObjects')}</h2>
       <p>{t(items.some(item=>catalogGroup(item,groups)===group&&item.requiresSource!==(group==='linked'))?'customObjectSectionHint':group==='independent'?'independentObjectsHint':'linkedObjectsHint')}</p>
       {items.filter(item=>catalogGroup(item,groups)===group).map(item=><button key={item.id} disabled={interactionPending} aria-label={`${item.label[language]} +`}
-        title={item.requiresSource?t('objectNeedsSource'):item.label[language]}
-        onClick={()=>dispatch({type:'add',effect:item.effect,...(item.template?{template:item.template}:{})})}><span>{item.label[language]} +</span>
+        title={`${item.label[language]}${item.requiresSource?' · '+t('objectNeedsSource'):''}`}
+        onClick={()=>dispatch({type:'add',effect:item.effect,...(item.template?{template:item.template}:{})})}><span className="catalog-item-line"><span className="catalog-item-name">{item.label[language]}</span><span className="catalog-item-add" aria-hidden="true">+</span></span>
         {item.requiresSource!==(group==='linked')&&<small>{t(item.requiresSource?'objectSourceNeeded':'objectSourceOptional')}</small>}
       </button>)}
       {!items.some(item=>catalogGroup(item,groups)===group)&&<p className="caption">{t('emptyObjectSection')}</p>}

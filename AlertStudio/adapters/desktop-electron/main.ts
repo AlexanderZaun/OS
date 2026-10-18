@@ -1,6 +1,10 @@
-import { app, BrowserWindow, ipcMain, protocol, net, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, net, dialog, shell,nativeImage } from 'electron';
+import {playbackTime} from '../../contracts/playback';
+import {writePng} from '../storage-files/png';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import {promises as fs} from 'node:fs';
+import {preparePortable,portableProjectFolder} from './portable';
 import { Projects } from '../../core/project/service';
 import { Extensions } from '../storage-files/extensions';
 import { RecoveryStore } from '../storage-files/recovery';
@@ -19,11 +23,16 @@ import {objectTemplates} from '../../modules/presets/cloud-network/object-templa
 import type { Effect, Manifest } from '../../sdk';
 import type { Project } from '../../contracts/project';
 protocol.registerSchemesAsPrivileged([{scheme:'studio',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
-if(process.env.ALERT_STUDIO_DATA) app.setPath('userData',path.resolve(process.env.ALERT_STUDIO_DATA));
+let portable:ReturnType<typeof preparePortable>|undefined;
+if(app.isPackaged){
+  try{app.setName('AlertStudio');portable=preparePortable(process.execPath);app.setPath('userData',portable.profile);app.setPath('sessionData',portable.profile);app.setAppLogsPath(portable.logs);app.setPath('crashDumps',portable.crashes);}
+  catch(error){dialog.showErrorBox('AlertStudio','Не удаётся записать данные рядом с программой. Полностью распакуйте архив в доступную для записи папку.\n\nCannot write beside the application. Extract the complete archive to a writable folder.\n\n'+String(error));app.exit(1);}
+}else if(process.env.ALERT_STUDIO_DATA) app.setPath('userData',path.resolve(process.env.ALERT_STUDIO_DATA));
 const effects:Effect[]=[textEffect,fogEffect,starsEffect,networkEffect]; const projects=new Projects(()=>effects,undefined,()=>objectTemplates);
 let extensions:Extensions; let active:Manifest[]=[]; let session:ProjectSession;
 const windows=new Set<BrowserWindow>();
 const playback=new Playback();
+const playbackTimer=setInterval(()=>{if(playback.finish())broadcastPlayback();},50);playbackTimer.unref();
 function broadcastPlayback(){const state=playback.snapshot();for(const w of windows)w.webContents.send('playback:changed',state);return state;}
 let shutdownComplete = false;
 let projectActionBusy=false,queuedCloseOwner:BrowserWindow|undefined;
@@ -52,14 +61,15 @@ async function projectAction<T>(action:()=>Promise<T>){
 async function saveProject(as=false,parent?:BrowserWindow){
   if(session.busy)throw Error('projectOperationBusy');
   let folder=session.status().folder;
+  if(!folder&&!as&&portable){const p=projects.snapshot().project;folder=portableProjectFolder(portable.projects,p.name,p.id);await fs.mkdir(folder,{recursive:true});}
   if(!folder||as){
-    const options={properties:['openDirectory','createDirectory'] as ('openDirectory'|'createDirectory')[],title:'Project folder'};
+    const options={properties:['openDirectory','createDirectory'] as ('openDirectory'|'createDirectory')[],title:'Project folder',...(portable?{defaultPath:portable.projects}:{})};
     const selected=parent?await dialog.showOpenDialog(parent,options):await dialog.showOpenDialog(options);
     if(selected.canceled||!selected.filePaths[0])return null;folder=selected.filePaths[0];
   }
   await session.save(folder);broadcast();return folder;
 }
-function broadcast(){const state=projects.snapshot();for(const w of windows)w.webContents.send('project:changed',state);return state;}
+function broadcast(){const state=projects.snapshot();if(playback.notification(state.project.notification))broadcastPlayback();for(const w of windows)w.webContents.send('project:changed',state);return state;}
 function windowFor(panel?:string) {
   const w=new BrowserWindow({width:panel?650:1440,height:panel?750:940,minWidth:500,minHeight:400,show:false,backgroundColor:'#0d111a',autoHideMenuBar:true,title:'AlertStudio',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
   windows.add(w); w.once('ready-to-show',()=>w.show());
@@ -84,10 +94,10 @@ async function confirmReplace(){if(!projects.snapshot().dirty)return true;return
 app.whenReady().then(async()=>{
   if(!app.requestSingleInstanceLock()) { app.quit(); return; }
   app.on('second-instance',()=>{const first=[...windows][0];first?.restore();first?.focus();});
-  session = new ProjectSession(projects, new RecoveryStore(path.join(app.getPath('userData'),'Recovery')), () => {
+  session = new ProjectSession(projects, new RecoveryStore(portable?.recovery??path.join(app.getPath('userData'),'Recovery'),undefined,portable?.root), () => {
     for(const w of windows) w.webContents.send('session:changed',session.status());
   });
-  extensions=new Extensions(path.join(app.getPath('userData'),'Extensions'));
+  extensions=new Extensions(portable?.extensions??path.join(app.getPath('userData'),'Extensions'));
   if(!process.argv.includes('--safe')) { try{active=await extensions.list();}catch(error){console.error('Extensions disabled:',error);} }
   protocol.handle('studio',async request=>{
     try {
@@ -106,6 +116,19 @@ app.whenReady().then(async()=>{
     } catch(error){console.error(error);} return new Response('',{status:404});
   });
   handle('project:snapshot',()=>projects.snapshot());
+  handle('frame:capture',()=>({project:projects.snapshot().project,time:playbackTime(playback.snapshot(),Date.now()),workspace:playback.snapshot().workspace??'main'}));
+  handle('frame:save-png',(w:BrowserWindow,raw:unknown,language:string)=>projectAction(async()=>{
+    if(!(raw instanceof Uint8Array)||raw.byteLength<24||raw.byteLength>40_000_000||(language!=='ru'&&language!=='en'))throw Error('Invalid PNG');
+    const bytes=Buffer.from(raw);
+    if(!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||bytes.toString('ascii',12,16)!=='IHDR')throw Error('Invalid PNG');
+    const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
+    if(width<320||width>3840||height<180||height>2160)throw Error('Invalid PNG dimensions');
+    const decoded=nativeImage.createFromBuffer(bytes),size=decoded.getSize();if(decoded.isEmpty()||size.width!==width||size.height!==height)throw Error('Invalid PNG');
+    const name=projects.snapshot().project.name.replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,100).replace(/[. ]+$/g,'')||'AlertStudio';
+    const result=await dialog.showSaveDialog(w,{title:language==='ru'?'Экспорт кадра в PNG (прозрачный фон)':'Export frame as PNG (transparent background)',defaultPath:`${name}-frame.png`,filters:[{name:'PNG',extensions:['png']}],properties:['showOverwriteConfirmation']});
+    if(result.canceled||!result.filePath)return null;
+    await writePng(result.filePath,bytes);return result.filePath;
+  }),true);
   handle('app:close-state',(w:BrowserWindow)=>closeStateFor(w),true);
   handle('app:close-response',(w:BrowserWindow,id:number,choice:CloseChoice)=>{if(w!==closeOwner)throw Error('Invalid close owner');return closing.respond(id,choice);},true);
   handle('project:preset',(id:string,language:string)=>projectAction(async()=>{
@@ -132,9 +155,9 @@ app.whenReady().then(async()=>{
     effects.push({...structuredClone(definition),evaluate:()=>[]});
   });
   handle('project:save',(as:boolean)=>projectAction(()=>saveProject(as)));
-  handle('project:open',()=>projectAction(async()=>{if(session.busy||!await confirmReplace())return false;const result=await dialog.showOpenDialog({properties:['openDirectory'],title:'Open project folder'});if(result.canceled)return false;await session.open(result.filePaths[0]);playback.reset();broadcastPlayback();broadcast();return true;}));
-  handle('project:create',(options:Pick<Project,'name'|'width'|'height'|'background'>)=>projectAction(async()=>{if(session.busy||!await confirmReplace())return false;const p=validateProject({...projects.snapshot().project,...options,id:crypto.randomUUID(),objects:[],modules:{},format:1});await session.create(p);playback.reset();broadcastPlayback();broadcast();return true;}));
-  handle('window:panel',(panel:string)=>{if(!['layers','properties','canvas','objects',...active.filter(m=>m.kind==='panel').map(m=>m.id)].includes(panel))throw Error('Unknown panel');windowFor(panel);});
+  handle('project:open',()=>projectAction(async()=>{if(session.busy||!await confirmReplace())return false;const result=await dialog.showOpenDialog({properties:['openDirectory'],title:'Open project folder',...(portable?{defaultPath:portable.projects}:{})});if(result.canceled)return false;await session.open(result.filePaths[0]);playback.reset();broadcastPlayback();broadcast();return true;}));
+  handle('project:create',(options:Pick<Project,'name'|'width'|'height'|'background'>)=>projectAction(async()=>{if(session.busy||!await confirmReplace())return false;const p=validateProject({...options,id:crypto.randomUUID(),objects:[],modules:{},format:1});await session.create(p);playback.reset();broadcastPlayback();broadcast();return true;}));
+  handle('window:panel',(panel:string)=>{if(!['layers','properties','canvas','objects','history',...active.filter(m=>m.kind==='panel').map(m=>m.id)].includes(panel))throw Error('Unknown panel');windowFor(panel);});
   windowFor();
 });
 app.on('window-all-closed',()=>app.quit());

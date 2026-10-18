@@ -17,7 +17,7 @@ try{
   const state=()=>page.evaluate(()=>window.studio.snapshot());
   const properties=page.locator('.properties-panel');
   const sourceIsFirst=async(label)=>{
-    await expect(properties.locator('input,select').first()).toHaveAttribute('aria-label',label);
+    await expect(properties.locator('.setting-field input,.setting-field select').first()).toHaveAttribute('aria-label',label);
     const visible=await properties.getByLabel(label,{exact:true}).evaluate(element=>{
       const rect=element.getBoundingClientRect(),panel=element.closest('.properties-panel').getBoundingClientRect();
       return rect.top>=panel.top&&rect.bottom<=panel.bottom;
@@ -82,5 +82,5 @@ try{
       'sources first and selection scroll reset','link undo/redo','detached source editing','folder save/open','RU/EN','900x650 and 1920x1080'],errors},null,2));
   console.log('Object creation templates Electron smoke passed');
 }finally{
-  if(app){await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}
+  if(app){for(const [i,p]of app.windows().entries())await p.screenshot({path:`artifacts/screenshots/object-templates-last-${i}.png`}).catch(()=>{});await app.evaluate(({app})=>app.exit(0)).catch(()=>{});await app.close().catch(()=>{});}
 }

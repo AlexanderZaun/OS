@@ -9,9 +9,14 @@ import {playbackTime} from '../../../contracts/playback';
 import {evaluateScene} from '../../../core/scene/evaluate';
 import type {SceneDiagnostic} from '../../../core/scene/evaluate';
 import {parseZoomPercent} from '../../../core/geometry/viewport';
+import {notificationFrame} from '../../../core/notification/evaluate';
+import {Dialog} from '../../../ui-kit/Dialog';
 export function CanvasPanel(props:PanelProps) {
   const canvas=useRef<HTMLCanvasElement>(null),latest=useRef(props),[time,setTime]=useState(0),[diagnostics,setDiagnostics]=useState<SceneDiagnostic[]>([]); latest.current=props;
   const playback=usePlayback(),playing=playback.state.playing;
+  const workspace=playback.state.workspace??'main',staged=workspace!=='main';
+  const [help,setHelp]=useState(false);
+  useEffect(()=>{if(props.interactionPending)setHelp(false);},[props.interactionPending]);
   function togglePlayback(){playback.command({type:'toggle'});}
   function seek(value:number){if(Number.isFinite(value))playback.command({type:'seek',time:Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,value))});}
   const t=translator(props.language);
@@ -40,22 +45,25 @@ export function CanvasPanel(props:PanelProps) {
   useEffect(()=>{setTime(Number(playbackTime(playback.state,Date.now()).toFixed(2)));},[playback.state.revision]);
   useEffect(()=>{
     const backend=new CanvasBackend(canvas.current!,latest.current.canvasRenderers);let raf=0;
-    let renderedObjects:unknown=null,renderedTime=-1,renderedWidth=-1,renderedHeight=-1,lastLabel=0,diagnosticKey='';
+    let renderedObjects:unknown=null,renderedTime=-1,renderedWidth=-1,renderedHeight=-1,lastLabel=0,diagnosticKey='',renderedStage='';
     function frame(now:number){const state=playback.latest.current,current=playbackTime(state,Date.now());
       if(state.playing&&now-lastLabel>=100){lastLabel=now;setTime(Number(current.toFixed(2)));}
       const {snapshot,effects}=latest.current;
-      if(renderedObjects!==snapshot.project.objects||renderedTime!==current||renderedWidth!==snapshot.project.width||renderedHeight!==snapshot.project.height){
-        const scene=evaluateScene(snapshot.project,effects,current);backend.render(scene.primitives);
+      const mode=state.workspace??'main',stageKey=JSON.stringify([mode,snapshot.project.notification]);
+      if(renderedObjects!==snapshot.project.objects||renderedTime!==current||renderedWidth!==snapshot.project.width||renderedHeight!==snapshot.project.height||renderedStage!==stageKey){
+        const frame=notificationFrame(snapshot.project.notification,mode,current);
+        const scene=evaluateScene(snapshot.project,effects,frame.effectTime);backend.render(scene.primitives,frame.opacity,scene.layers);renderedStage=stageKey;
         const key=JSON.stringify(scene.diagnostics);if(key!==diagnosticKey){diagnosticKey=key;setDiagnostics(scene.diagnostics);}
         renderedObjects=snapshot.project.objects;renderedTime=current;renderedWidth=snapshot.project.width;renderedHeight=snapshot.project.height;
       }
       raf=requestAnimationFrame(frame);
     }raf=requestAnimationFrame(frame);return()=>{cancelAnimationFrame(raf);backend.dispose();};
   },[]);
-  return <div className="canvas-panel"><div className="canvas-tools">
+  const stageFrame=notificationFrame(project.notification,workspace,time);
+  return <div className="canvas-panel" data-preview-workspace={workspace}><div className="canvas-tools">
     <div className="canvas-zoom-controls" role="group" aria-label={t('zoom')}>
       <button aria-label={t('zoomOut')} title={t('zoomOut')} disabled={scale<=.01} onClick={()=>viewport.zoom(scale/1.25)}>−</button>
-      <select aria-label={t('zoom')} value={viewport.view.mode==='fit'?'fit':String(scale)} onChange={e=>e.target.value==='fit'?viewport.fit():viewport.zoom(Number(e.target.value))}>
+      <select aria-label={t('zoom')} title={t('zoomPresets')} value={viewport.view.mode==='fit'?'fit':String(scale)} onChange={e=>e.target.value==='fit'?viewport.fit():viewport.zoom(Number(e.target.value))}>
         <option value="fit">{t('fit')} · {Math.round(viewport.fitScale*100)}%</option>
         {viewport.view.mode==='manual'&&!presets.includes(scale)&&<option value={String(scale)}>{Math.round(scale*100)}%</option>}
         {presets.map(value=><option key={value} value={String(value)}>{value*100}%</option>)}
@@ -72,9 +80,9 @@ export function CanvasPanel(props:PanelProps) {
       <button aria-pressed={viewport.hand} title={t('handToolHint')} onClick={()=>{viewport.toggleHand();viewport.stage.current?.focus({preventScroll:true});}}>{t('handTool')}</button>
     </div><div className="canvas-playback-controls"><button onClick={togglePlayback}>{t(playing?'pause':'play')}</button><label>t <input aria-label={t('time')} type="number" min="0" step="0.1" value={time} onChange={e=>seek(Number(e.target.value))}/> s</label>
     <label><input type="checkbox" aria-label={t('loop')} checked={playback.state.loop} onChange={e=>playback.command({type:'configure',duration:playback.state.duration,loop:e.target.checked,speed:playback.state.speed})}/>{t('loop')}</label>
-    <label title={t('duration')}>{t('period')} <input aria-label={t('duration')} type="number" min="1" max="3600" value={playback.state.duration} onChange={e=>{const duration=Number(e.target.value);if(duration>=1&&duration<=3600)playback.command({type:'configure',duration,loop:playback.state.loop,speed:playback.state.speed});}}/> s</label>
+    {staged?<span className="preview-length" title={t('previewLength')}>{t('previewLengthShort')}: {playback.state.duration} s</span>:<label title={t('duration')}>{t('period')} <input aria-label={t('duration')} type="number" min="1" max="3600" value={playback.state.duration} onChange={e=>{const duration=Number(e.target.value);if(duration>=1&&duration<=3600)playback.command({type:'configure',duration,loop:playback.state.loop,speed:playback.state.speed});}}/> s</label>}
     <label title={t('playbackSpeed')}>× <input aria-label={t('playbackSpeed')} type="number" min="0" max="4" step="0.1" value={playback.state.speed} onChange={e=>{const speed=Number(e.target.value);if(speed>=0&&speed<=4)playback.command({type:'configure',duration:playback.state.duration,loop:playback.state.loop,speed});}}/></label>
-    <span className="canvas-dimensions">{project.width} × {project.height}</span></div></div>
+    </div></div>
     {(diagnostics.length>0||playback.error)&&<div className="canvas-diagnostics" role="status">{playback.error?t('effectProblem'):diagnostics.map(d=>`${t(d.code==='missing-mask'?'maskProblem':d.code==='limit'?'limitProblem':d.code==='cycle'?'cycleProblem':d.code==='missing-source'||d.code==='wrong-source'||d.code==='inactive-source'?'sourceProblem':'effectProblem')}: ${project.objects.find(o=>o.id===d.objectId)?.name??d.objectId}`).join(' · ')}</div>}
     <div ref={viewport.stage} className="canvas-stage" tabIndex={0} role="region" aria-label={t('canvasViewport')}
       data-navigation={viewport.dragging?'dragging':viewport.space||viewport.hand?'pan':editing.moving?'moving':'idle'}
@@ -96,6 +104,10 @@ export function CanvasPanel(props:PanelProps) {
         transform:`translate(-50%, -50%) rotate(${editing.selection.rotation??0}rad)`,
       }}/>}
     </div>
-    <div className="canvas-caption">{t('canvasNavigation')}</div></div>;
+    <div className="canvas-caption">
+      {project.objects.some(o=>o.editor?.solo)&&<span title={t('soloLayer')}>{t('soloActive')}: {project.objects.filter(o=>o.editor?.solo).length}</span>}
+      {staged&&<span className="stage-readout" data-testid="stage-readout">{t(stageFrame.phase==='finished'?'stageFinished':stageFrame.phase==='intro'?'workspaceIntro':stageFrame.phase==='outro'?'workspaceOutro':'workspaceMain')} · {t('stageOpacity')}: {Math.round(stageFrame.opacity*100)}%</span>}
+      <span className="canvas-dimensions">{project.width} × {project.height}</span><button className="canvas-help" aria-label={t('canvasHelp')} title={t('canvasNavigation')} onClick={()=>setHelp(true)}>?</button>
+    </div>{help&&<Dialog title={t('canvasHelp')} closeLabel={t('close')} onClose={()=>setHelp(false)}><p>{t('canvasNavigation')}</p></Dialog>}</div>;
 }
 export function register(host:UiHost){host.registerPanel({id:'canvas',label:{ru:'Холст',en:'Canvas'},component:CanvasPanel});}

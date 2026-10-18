@@ -16,7 +16,7 @@ export function MenuBar({menus,label,disabled=false}:{menus:MenuDefinition[];lab
   useEffect(()=>{if(disabled)setOpen(null);},[disabled]);
   useEffect(()=>{
     function outside(e:PointerEvent){if(!root.current?.contains(e.target as Node)&&!popup.current?.contains(e.target as Node))setOpen(null);}
-    function key(e:KeyboardEvent){if(e.key==='F10'&&!e.shiftKey&&!disabled){e.preventDefault();triggers()[0]?.focus();setFocusIndex(0);}}
+    function key(e:KeyboardEvent){if(e.key==='F10'&&!e.shiftKey&&!disabled&&!document.querySelector('[role="dialog"]')){e.preventDefault();triggers()[0]?.focus();setFocusIndex(0);}}
     function dismiss(){setOpen(null);}
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',key);window.addEventListener('blur',dismiss);
     return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',key);window.removeEventListener('blur',dismiss);};

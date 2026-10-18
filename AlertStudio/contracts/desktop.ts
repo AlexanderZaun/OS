@@ -4,7 +4,9 @@ import type { Effect } from '../sdk';
 import type { RecoveryInfo, SessionStatus } from './recovery';
 import type {PlaybackSnapshot,PlaybackCommand} from './playback';
 import type {WindowCloseState,CloseChoice} from './close';
+import type {CapturedFrame} from './frame';
 export interface Desktop {
+  captureFrame():Promise<CapturedFrame>;savePng(bytes:Uint8Array,language:'ru'|'en'):Promise<string|null>;
   closeState():Promise<WindowCloseState>;subscribeClose(listener:(state:WindowCloseState)=>void):()=>void;respondClose(id:number,choice:CloseChoice):Promise<void>;
   createPreset(id:'cloud-network',language:'ru'|'en'):Promise<boolean>;
   playback():Promise<PlaybackSnapshot>;playbackCommand(command:PlaybackCommand):Promise<PlaybackSnapshot>;subscribePlayback(listener:(state:PlaybackSnapshot)=>void):()=>void;

@@ -13,6 +13,9 @@
   --studio-accent-text: #0b2139;
   --studio-danger: #ffb3ae;
   --studio-success: #92c9b2;
+  --studio-tag-orange: #eeb582;
+  --studio-tag-yellow: #ded18a;
+  --studio-tag-purple: #bba0df;
   --studio-radius: 6px;
   --studio-panel-padding: 16px;
   --studio-control-height: 32px;
@@ -79,7 +82,7 @@ p { color: var(--studio-muted); line-height: 1.6; }
   --dv-separator-border: var(--studio-border);
   --dv-paneview-header-border-color: var(--studio-border);
   --dv-active-sash-color: var(--studio-accent);
-  --dv-tabs-and-actions-container-height: 34px;
+  --dv-tabs-and-actions-container-height: 28px;
   --dv-tabs-and-actions-container-font-size: 12px;
   --dv-tab-font-size: 12px;
   --dv-icon-hover-background-color: var(--studio-hover);

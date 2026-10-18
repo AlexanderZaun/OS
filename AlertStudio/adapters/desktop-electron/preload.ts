@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { Desktop } from '../../contracts/desktop';
 const bridge:Desktop={
+  captureFrame:()=>ipcRenderer.invoke('frame:capture'),savePng:(bytes,language)=>ipcRenderer.invoke('frame:save-png',bytes,language),
   closeState:()=>ipcRenderer.invoke('app:close-state'),respondClose:(id,choice)=>ipcRenderer.invoke('app:close-response',id,choice),
   subscribeClose:listener=>{const handler=(_e:unknown,state:Parameters<typeof listener>[0])=>listener(state);ipcRenderer.on('app:close-changed',handler);return()=>ipcRenderer.removeListener('app:close-changed',handler);},
   createPreset:(id,language)=>ipcRenderer.invoke('project:preset',id,language),

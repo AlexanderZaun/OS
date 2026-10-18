@@ -23,7 +23,7 @@ export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelPro
     const definition=panels.find(panel=>panel.id===type),current=api.current;if(!definition||!current)return;
     if(type==='objects'&&!current.panels.some(panel=>panel.params?.type===type)){
       const canvas=current.panels.find(panel=>panel.params?.type==='canvas')??current.panels[0];
-      current.addPanel({id:crypto.randomUUID(),component:'panel',params:{type},title:definition.label[props.language],initialWidth:180,minimumWidth:155,
+      current.addPanel({id:crypto.randomUUID(),component:'panel',params:{type},title:definition.label[props.language],initialWidth:170,minimumWidth:120,
         ...(canvas?{position:{referencePanel:canvas.id,direction:'left' as const}}:{})});
       return;
     }
@@ -35,11 +35,13 @@ export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelPro
         ...(canvas?{position:{referencePanel:canvas.id,direction:'below' as const}}:{})});
       return;
     }
-    const target=current.panels.find(panel=>panel.params?.type===type)??current.panels.find(panel=>panel.params?.type!=='panel-manager');
+    const target=current.panels.find(panel=>panel.params?.type===type)??(type==='history'?current.panels.find(panel=>panel.params?.type==='properties'):undefined)??current.panels.find(panel=>panel.params?.type!=='panel-manager');
     current.addPanel({id:crypto.randomUUID(),component:'panel',params:{type},title:definition.label[props.language],
-      ...(['layers','properties'].includes(type)?{minimumWidth:190}:{}),
-      ...(type==='objects'?{minimumWidth:155}:{}),
-      ...(target?{position:{referencePanel:target.id,direction:'below' as const}}:{})});
+      ...(['layers','properties','history'].includes(type)?{minimumWidth:160}:{}),
+      ...(type==='history'?{initialHeight:180,minimumHeight:160}:{}),
+      ...(type==='layers'?{minimumHeight:190}:{}),
+      ...(type==='objects'?{minimumWidth:120}:{}),
+      ...(target?{position:{referencePanel:target.id,direction:type==='history'?'within' as const:'below' as const}}:{})});
   }
   function show(type:string){const existing=api.current?.panels.find(panel=>panel.params?.type===type);if(existing)existing.api.setActive();else open(type);}
   useImperativeHandle(ref,()=>({showPanels:()=>show('panel-manager'),show,add:open,canvas:action=>{
@@ -58,14 +60,20 @@ export const Workspace=forwardRef<WorkspaceHandle,{panels:Panel[];props:PanelPro
     if(saved){try{e.api.fromJSON(JSON.parse(saved));restored=true;}catch(error){console.warn(error);e.api.clear();}}
     if(!restored){
       e.api.addPanel({id:'canvas-1',component:'panel',params:{type:'canvas'},title:panels.find(p=>p.id==='canvas')!.label[props.language]});
-      e.api.addPanel({id:'layers-1',component:'panel',params:{type:'layers'},title:panels.find(p=>p.id==='layers')!.label[props.language],initialWidth:340,minimumWidth:190,position:{referencePanel:'canvas-1',direction:'right'}});
-      e.api.addPanel({id:'properties-1',component:'panel',params:{type:'properties'},title:panels.find(p=>p.id==='properties')!.label[props.language],initialHeight:380,minimumWidth:190,position:{referencePanel:'layers-1',direction:'below'}});
+      e.api.addPanel({id:'layers-1',component:'panel',params:{type:'layers'},title:panels.find(p=>p.id==='layers')!.label[props.language],initialWidth:300,minimumWidth:160,minimumHeight:190,position:{referencePanel:'canvas-1',direction:'right'}});
+      e.api.addPanel({id:'properties-1',component:'panel',params:{type:'properties'},title:panels.find(p=>p.id==='properties')!.label[props.language],initialHeight:380,minimumWidth:160,position:{referencePanel:'layers-1',direction:'below'}});
     }
     // Add the new controls once when upgrading a saved layout, but respect later user closure.
     let catalogMigrated=false;try{catalogMigrated=localStorage.getItem('alert-studio-object-catalog-v1')==='true';}catch{}
     if(!restored||!catalogMigrated){if(!e.api.panels.some(panel=>panel.params?.type==='objects'))open('objects');}
     try{localStorage.setItem('alert-studio-object-catalog-v1','true');}catch{}
     // The manager is optional. Restore existing user layouts without injecting it.
+    for(const panel of e.api.panels){
+      if(panel.params?.type==='layers')panel.api.setConstraints({minimumWidth:160,minimumHeight:190});
+      if(panel.params?.type==='properties')panel.api.setConstraints({minimumWidth:160});
+      if(panel.params?.type==='objects')panel.api.setConstraints({minimumWidth:120});
+      if(panel.params?.type==='history')panel.api.setConstraints({minimumWidth:160,minimumHeight:160});
+    }
     layoutListener.current=e.api.onDidLayoutChange(save);save();
   }}/></div></PanelContext.Provider>;
 });

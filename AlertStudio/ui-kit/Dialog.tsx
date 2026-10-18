@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
+import {createPortal} from 'react-dom';
 
 export function Dialog({title, closeLabel, onClose, children,closeDisabled=false}: {
   title: string; closeLabel: string; onClose: () => void; children: ReactNode;closeDisabled?:boolean;
@@ -27,10 +28,10 @@ export function Dialog({title, closeLabel, onClose, children,closeDisabled=false
   }, []);
   useEffect(()=>{if(closeDisabled)element.current?.focus();},[closeDisabled]);
 
-  return <div className="modal-scrim">
+  return createPortal(<div className="modal-scrim">
     <section className="studio-dialog" ref={element} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}>
       <div className="dialog-heading"><h2 id={titleId}>{title}</h2><button className="quiet-button" disabled={closeDisabled} onClick={onClose}>{closeLabel}</button></div>
       <div className="dialog-content">{children}</div>
     </section>
-  </div>;
+  </div>,document.body);
 }
